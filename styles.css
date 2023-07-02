@@ -36,12 +36,12 @@ nav ul li {
   background-color: #f8f8f8;
   padding: 40px;
   text-align: center;
+  width: 100%;
 }
 
 /* Blog posts section */
 .content {
   display: flex;
-  flex-wrap: wrap;
 }
 
 .blog-posts {
