@@ -76,10 +76,13 @@ nav ul li {
   flex: 1;
   background-color: #f5f5f5;
   padding: 20px;
+  text-align: center;
 }
 
 .profile img {
   max-width: 100%;
+  max-width: 70%;
+  border-radius: 50%;
 }
 
 /* Footer */
