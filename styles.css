@@ -79,10 +79,9 @@ nav ul li {
   text-align: center;
 }
 
-.profile img {
-  max-width: 100%;
+.profile img { 
   max-width: 70%;
-  border-radius: 50%;
+  border-radius: 10%;
 }
 
 /* Footer */
