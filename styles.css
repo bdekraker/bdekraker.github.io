@@ -40,6 +40,10 @@ nav ul li {
   
 }
 
+.calendar img {
+  max-width: 80%;
+}
+
 /* Content and Sidebar section */
 .content {
   display: flex;
