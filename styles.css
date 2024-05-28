@@ -59,6 +59,10 @@ nav ul li {
   margin-top: 0;
 }
 
+video {
+border-radius: 10px;
+}
+
 .blog-posts article time {
   font-style: italic;
 }
