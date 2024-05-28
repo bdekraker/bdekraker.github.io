@@ -33,7 +33,7 @@ nav ul li {
 
 /* Hero section */
 .hero {
-  background-color: #2e3954;;
+  background-color: #2e3954;
   padding: 40px;
   text-align: center;
   color: #efefef;
@@ -43,7 +43,7 @@ nav ul li {
 /* Content and Sidebar section */
 .content {
   display: flex;
-  text-align: center;
+  text-align: center !important;
 }
 
 .blog-posts {
