@@ -62,7 +62,8 @@ nav ul li {
 }
 
 video {
-border-radius: 10px;
+  border-radius: 20px !important;
+    max-width: 40% !important;
 }
 
 .blog-posts article time {
