@@ -55,10 +55,24 @@
     </div>
 
     <script>
-        const questions = [];
-        for (let i = 6; i <= 30; i++) {
-            questions.push({ question: `6 x ${i}`, answer: 6 * i });
-        }
+        const questions = [
+            { question: "6 x 6", answer: 36 },
+            { question: "6 x 7", answer: 42 },
+            { question: "6 x 8", answer: 48 },
+            { question: "6 x 9", answer: 54 },
+            { question: "6 x 10", answer: 60 },
+            { question: "6 x 11", answer: 66 },
+            { question: "6 x 12", answer: 72 },
+            { question: "6 x 15", answer: 90 },
+            { question: "6 x 18", answer: 108 },
+            { question: "6 x 20", answer: 120 },
+            { question: "6 x 21", answer: 126 },
+            { question: "6 x 23", answer: 138 },
+            { question: "6 x 25", answer: 150 },
+            { question: "6 x 28", answer: 168 },
+            { question: "6 x 30", answer: 180 },
+        ];
+        
         let currentQuestionIndex = 0;
         let attempts = 0;
 
