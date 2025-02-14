@@ -10,7 +10,6 @@ body {
   color: #e0e0e0;
 }
 
-
 a {
   text-decoration: none;
   color: #82aaff;
@@ -73,6 +72,13 @@ video {
   border-radius: 20px;
   max-width: 100%;
   margin-top: 10px;
+}
+
+/* Media query for desktop: limit video width to 50% */
+@media (min-width: 769px) {
+  video {
+    max-width: 50%;
+  }
 }
 
 .blog-posts article time {
