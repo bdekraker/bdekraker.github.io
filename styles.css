@@ -99,13 +99,38 @@ video {
   flex: 1;
   background-color: #1f1f1f;
   padding: 20px;
-  text-align: center;
+  text-align: left;
   margin-top: 20px;
+}
+
+.sidebar .profile {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .profile img { 
   max-width: 70%;
   border-radius: 10%;
+}
+
+.sidebar h2 {
+  color: #82aaff;
+  margin-bottom: 10px;
+}
+
+.sidebar h3 {
+  margin: 5px 0;
+  color: #82aaff;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  margin-bottom: 5px;
 }
 
 /* Footer */
