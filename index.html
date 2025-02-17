@@ -27,6 +27,34 @@
 
     <div class="content">
       <section class="blog-posts">
+
+
+ <section class="projects">
+          <article>
+              <h2>Audio Analysis and Normalization Software</h2>
+              <p>This Python application is a desktop tool for visualizing, analyzing, and processing WAV audio files. The application assisted my team on the training pipeline for a major LLM's Advacned Voice Mode.
+                <br>
+It leverages several technologies and libraries: <br>
+PyQt5: Provides the graphical user interface (GUI), including menus, custom widgets, and media playback controls.
+PyQtGraph: Used for plotting and dynamically updating waveform visualizations.
+Pydub: Handles audio file manipulation such as normalization, gain adjustments, and conversion.
+NumPy & wave: Perform low-level audio processing tasks like computing RMS (Root Mean Square) and peak levels.
+FFmpeg (via subprocess): Ensures precise audio conversions (e.g., converting files to mono, 24-bit, 48 kHz).</p>
+            <p>
+Manual Volume Normalization: Implements a multi-pass, chunk-based normalization process with crossfading to smooth out transitions.
+Audio Conversion: Provides a tool to convert audio files to the required specifications using both pydub and FFmpeg.
+            </p>
+                
+              <p>
+                <video controls autoplay muted loop>
+                  <source src="/vids/wavapp.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+              </p>
+              <a href="#" class="read-more">Read More</a>
+          </article>
+        </section>
+        
         <!-- Existing Projects -->
         <section class="projects">
           <article>
