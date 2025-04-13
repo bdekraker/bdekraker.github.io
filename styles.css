@@ -100,20 +100,32 @@ video {
   background-color: #1f1f1f;
   text-align: left;
   margin-top: 20px;
+  border-radius: 10px;
 }
 
 .sidebar-content {
-  background-color: #181818;
+  background-color: #141414;
   padding: 20px;
   border-radius: 10px;
 }
 
-.sidebar .profile {
-  text-align: center;
+.sidebar .profile,
+.sidebar .toolset,
+.sidebar .experience {
+  background-color: #1a1a1a;
+  padding: 15px;
   margin-bottom: 20px;
+  border-radius: 10px;
+  text-align: left;
 }
 
-.profile-pic { 
+.sidebar .experience {
+  margin-bottom: 0;
+}
+
+.profile-pic {
+  display: block;
+  margin: 0 auto 15px auto;
   max-width: 70%;
   border-radius: 15px;
 }
