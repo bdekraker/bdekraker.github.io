@@ -98,9 +98,14 @@ video {
 .sidebar {
   flex: 1;
   background-color: #1f1f1f;
-  padding: 20px;
   text-align: left;
   margin-top: 20px;
+}
+
+.sidebar-content {
+  background-color: #181818;
+  padding: 20px;
+  border-radius: 10px;
 }
 
 .sidebar .profile {
@@ -108,9 +113,9 @@ video {
   margin-bottom: 20px;
 }
 
-.profile img { 
+.profile-pic { 
   max-width: 70%;
-  border-radius: 10%;
+  border-radius: 15px;
 }
 
 .sidebar h2 {
