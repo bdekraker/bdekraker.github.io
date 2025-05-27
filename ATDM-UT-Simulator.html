@@ -5,26 +5,40 @@
   <title>Ultrasonic NDT Simulator + Realistic A‑Scan Spikes</title>
   <style>
     body { margin:0; background:#313131; color: #f0f0f0; font-family: sans-serif; } /* Dark background, light text, default sans-serif */
-    canvas { display:block; margin:10px auto; }
-    #canvas { background:#313131; } 
-    #ascan { background:#003300; border-radius: 10px; } /* Rounded corners for A-scan canvas */
+    #overallContainer {
+      background-color: #4a4a4a; /* Lighter gray than body */
+      padding: 20px;
+      border-radius: 15px;
+      width: 800px; /* Content width, matches canvases */
+      margin: 30px auto; /* Center container with top/bottom margin */
+    }
+    canvas { display:block; /* Remove general margin, handle specifically or by container */ }
+    #canvas { 
+      background:#313131; 
+      margin-bottom: 10px; /* Space below main canvas */
+    }
+    #ascan { 
+      background:#003300; 
+      border-radius: 10px; /* Rounded corners for A-scan canvas */
+    }
     #instructionText {
       text-align: center;
       font-family: sans-serif;
       color: #cccccc; /* Light gray text for contrast */
-      margin: 10px 0;
+      margin: 10px 0; /* Provides space above and below */
       font-size: 14px;
     }
   </style>
 </head>
 <body>
-
-  <!-- main ray‑trace -->
-  <canvas id="canvas" width="800" height="400"></canvas>
-  <!-- Instructional Text -->
-  <div id="instructionText">Slide the transducer above to simulate acoustics.</div>
-  <!-- A‑scan display -->
-  <canvas id="ascan"  width="800" height="200"></canvas>
+  <div id="overallContainer">
+    <!-- main ray‑trace -->
+    <canvas id="canvas" width="800" height="400"></canvas>
+    <!-- Instructional Text -->
+    <div id="instructionText">Slide the transducer above to simulate acoustics.</div>
+    <!-- A‑scan display -->
+    <canvas id="ascan"  width="800" height="200"></canvas>
+  </div>
 
   <script>
   // ————— Math helpers —————
