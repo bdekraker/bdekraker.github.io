@@ -4,16 +4,25 @@
   <meta charset="UTF-8">
   <title>Ultrasonic NDT Simulator + Realistic A‑Scan Spikes</title>
   <style>
-    body { margin:0; background:#313131; } /* Light gray background */
+    body { margin:0; background:#313131; color: #f0f0f0; font-family: sans-serif; } /* Dark background, light text, default sans-serif */
     canvas { display:block; margin:10px auto; }
-    #canvas { background:#313131; } /* Light gray background */
+    #canvas { background:#313131; } 
     #ascan { background:#003300; border-radius: 10px; } /* Rounded corners for A-scan canvas */
+    #instructionText {
+      text-align: center;
+      font-family: sans-serif;
+      color: #cccccc; /* Light gray text for contrast */
+      margin: 10px 0;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
 
   <!-- main ray‑trace -->
   <canvas id="canvas" width="800" height="400"></canvas>
+  <!-- Instructional Text -->
+  <div id="instructionText">Slide the transducer above to simulate acoustics.</div>
   <!-- A‑scan display -->
   <canvas id="ascan"  width="800" height="200"></canvas>
 
