@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ultrasonic NDT Simulator + Realistic A‑Scan Spikes</title>
+  <style>
+    body { margin:0; background:#313131; } /* Light gray background */
+    canvas { display:block; margin:10px auto; }
+    #canvas { background:#313131; } /* Light gray background */
+    #ascan { background:#003300; border-radius: 10px; } /* Rounded corners for A-scan canvas */
+  </style>
+</head>
+<body>
+
+  <!-- main ray‑trace -->
+  <canvas id="canvas" width="800" height="400"></canvas>
+  <!-- A‑scan display -->
+  <canvas id="ascan"  width="800" height="200"></canvas>
+
+  <script>
+  // ————— Math helpers —————
+  function sub(a,b){ return {x:a.x-b.x, y:a.y-b.y}; }
+  function dot(a,b){ return a.x*b.x + a.y*b.y; }
+  function len(v){ return Math.hypot(v.x,v.y); }
+  function normalize(v){
+    const L=len(v);
+    return L>0?{x:v.x/L,y:v.y/L}:{x:0,y:0};
+  }
+  function reflect(d,n){
+    const dn=dot(d,n);
+    return { x: d.x - 2*dn*n.x, y: d.y - 2*dn*n.y };
+  }
+
+  function drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.arcTo(x + width, y, x + width, y + radius, radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+    ctx.lineTo(x + radius, y + height);
+    ctx.arcTo(x, y + height, x, y + height - radius, radius);
+    ctx.lineTo(x, y + radius);
+    ctx.arcTo(x, y, x + radius, y, radius);
+    ctx.closePath();
+  }
+
+  // ————— Configuration —————
+  const PULSE_FREQUENCY = 1,        // Hz
+        EMIT_PERIOD     = 1/PULSE_FREQUENCY,
+        SPEED           = 100,      // px/sec = sound speed
+        LIFETIME_FACTOR = 0.3,
+        EPS             = 1e-3,
+        DECAY           = 0.7,      // energy per bounce
+        MAX_PULSES      = 5;        // recent pulses to remember
+
+  // ————— Canvas setup —————
+  const canvas   = document.getElementById('canvas'),
+        ctx      = canvas.getContext('2d'),
+        ascan    = document.getElementById('ascan'),
+        ascanCtx = ascan.getContext('2d');
+
+  // ————— Scene geometry —————
+  const part = { x:50, y:80, w:700, h:280 };
+  let trans    = { x:canvas.width/2-40, y:part.y-20, w:80, h:20 };
+  let dragging = false, dragOffX = 0;
+
+  const flaws = [
+    { type:'rectangle', x:150, y:160, w:60,  h:20 },
+    { type:'circle',    cx:300, cy:200, radius:25 },
+    { type:'polygon',   points:[
+        {x:450,y:140},{x:520,y:150},{x:500,y:200},{x:430,y:190}
+      ]
+    },
+    { type:'rectangle', x:600, y:220, w:50,  h:30 }
+  ];
+
+  // ————— Pulse tracking —————
+  class Pulse {
+    constructor(t0, rays){
+      this.emissionTime = t0;
+      this.echoes = rays
+        .filter(r=>r.returns)
+        .map(r=>({
+          tof: r.total / SPEED,
+          amp: r.segE[r.segE.length-1]
+        }))
+        .sort((a,b)=>a.tof - b.tof);
+    }
+  }
+
+  let lastEmission = -Infinity;
+  let pulses = []; // Array to store active pulses
+
+  // Globals for A-scan animation
+  let animatedEchoes = []; 
+  const LERP_FACTOR = 0.15; // Interpolation speed (0 to 1, higher is faster)
+  const TOF_MATCH_THRESHOLD = 0.01; // Max TOF difference (seconds) to consider echoes the same
+  let nextEchoId = 0; // For uniquely identifying animated echoes (optional, for debugging)
+
+  // ————— Mouse drag for transducer —————
+  canvas.addEventListener('mousedown', e=>{
+    const m=getMouse(e);
+    if(m.x>=trans.x&&m.x<=trans.x+trans.w
+    && m.y>=trans.y&&m.y<=trans.y+trans.h){
+      dragging=true; dragOffX=m.x-trans.x;
+      canvas.style.cursor = 'grabbing'; // Set cursor to grabbing when drag starts
+    }
+  });
+  canvas.addEventListener('mousemove', e=>{
+    const m=getMouse(e);
+    const isOverTransducer = m.x>=trans.x&&m.x<=trans.x+trans.w && m.y>=trans.y&&m.y<=trans.y+trans.h;
+
+    if(dragging){
+      trans.x = Math.min(part.x+part.w-trans.w,
+                         Math.max(part.x, m.x-dragOffX));
+      // Cursor remains 'grabbing' as set on mousedown
+    } else { // Not dragging
+      if (isOverTransducer) {
+        canvas.style.cursor = 'grab';
+      } else {
+        canvas.style.cursor = 'default';
+      }
+    }
+  });
+  ['mouseup','mouseleave'].forEach(evtName =>
+    canvas.addEventListener(evtName, e => {
+      if (evtName === 'mouseup') {
+        const wasDragging = dragging; 
+        dragging = false;
+        if (wasDragging) { 
+          const m = getMouse(e);
+          const isOverTransducer = m.x >= trans.x && m.x <= trans.x + trans.w && m.y >= trans.y && m.y <= trans.y + trans.h;
+          canvas.style.cursor = isOverTransducer ? 'grab' : 'default';
+        }
+      } else if (evtName === 'mouseleave') {
+        if (dragging) {
+            dragging = false; 
+        }
+        canvas.style.cursor = 'default'; 
+      }
+    })
+  );
+  function getMouse(e){
+    const r=canvas.getBoundingClientRect();
+    return {
+      x:(e.clientX-r.left)*(canvas.width/r.width),
+      y:(e.clientY-r.top)*(canvas.height/r.height)
+    };
+  }
+
+  // ————— Ray‑tracer (unchanged) —————
+  function computeRays(){
+    const numRays=10, maxBounces=10,
+          spread=20*Math.PI/180,
+          cx=trans.x+trans.w/2, cy=trans.y+trans.h;
+    const rays=[];
+    for(let i=0;i<numRays;i++){
+      const ang = -spread/2 + (i/(numRays-1))*spread;
+      let dir=normalize({x:Math.sin(ang), y:Math.cos(ang)}),
+          p={x:cx,y:cy}, energy=1, returned=false;
+      const pts=[{...p}], segDirs=[], segE=[];
+      for(let b=0;b<maxBounces;b++){
+        let nearest={t:Infinity,type:null,side:null,normal:null};
+
+        // bottom boundary
+        if(dir.y>0){
+          const t0=((part.y+part.h)-p.y)/dir.y;
+          if(t0>EPS&&t0<nearest.t)
+            nearest={t:t0,type:'boundary',side:'bottom'};
+        }
+
+        // flaws
+        flaws.forEach(f=>{
+          switch(f.type){
+            case 'rectangle':
+              [[1,0,f.x,true,f.y,f.y+f.h],
+               [-1,0,f.x+f.w,true,f.y,f.y+f.h],
+               [0,1,f.y,false,f.x,f.x+f.w],
+               [0,-1,f.y+f.h,false,f.x,f.x+f.w]]
+              .forEach(([nx,ny,c,vert,min,max])=>{
+                let t0;
+                if(vert){
+                  if(dir.x===0) return;
+                  t0=(c-p.x)/dir.x;
+                  if(t0<=EPS||t0>=nearest.t) return;
+                  const yh=p.y+dir.y*t0;
+                  if(yh>=min-EPS&&yh<=max+EPS)
+                    nearest={t:t0,type:'flaw',normal:{x:nx,y:ny}};
+                } else {
+                  if(dir.y===0) return;
+                  t0=(c-p.y)/dir.y;
+                  if(t0<=EPS||t0>=nearest.t) return;
+                  const xh=p.x+dir.x*t0;
+                  if(xh>=min-EPS&&xh<=max+EPS)
+                    nearest={t:t0,type:'flaw',normal:{x:nx,y:ny}};
+                }
+              });
+              break;
+            case 'circle':
+              const oc=sub(p,{x:f.cx,y:f.cy}),
+                    bq=2*dot(oc,dir),
+                    cq=dot(oc,oc)-f.radius*f.radius,
+                    disc=bq*bq-4*cq;
+              if(disc>=0){
+                const sd=Math.sqrt(disc);
+                let t0=(-bq-sd)/2;
+                if(t0<=EPS) t0=(-bq+sd)/2;
+                if(t0>EPS&&t0<nearest.t){
+                  const hit={x:p.x+dir.x*t0,y:p.y+dir.y*t0},
+                        nrm=normalize(sub(hit,{x:f.cx,y:f.cy}));
+                  nearest={t:t0,type:'flaw',normal:nrm};
+                }
+              }
+              break;
+            case 'polygon':
+              for(let k=0;k<f.points.length;k++){
+                const p1=f.points[k], p2=f.points[(k+1)%f.points.length],
+                      seg=sub(p2,p1),
+                      rdx=p1.x-p.x, rdy=p1.y-p.y,
+                      det=seg.x*dir.y-seg.y*dir.x;
+                if(Math.abs(det)<=EPS) continue;
+                const tRay=(rdx*(-seg.y)-rdy*(-seg.x))/
+                           (dir.x*(-seg.y)-dir.y*(-seg.x)),
+                      uSeg=(dir.x*rdy-dir.y*rdx)/
+                           (dir.x*(-seg.y)-dir.y*(-seg.x));
+                if(tRay>EPS&&tRay<nearest.t&&uSeg>=0&&uSeg<=1){
+                  const nrm=normalize({x:-(p2.y-p1.y),y:(p2.x-p1.x)});
+                  nearest={t:tRay,type:'flaw',normal:nrm};
+                }
+              }
+              break;
+          }
+        });
+
+        // left/right walls
+        if(dir.x<0){
+          const t0=(part.x-p.x)/dir.x;
+          if(t0>EPS&&t0<nearest.t){
+            const yh=p.y+dir.y*t0;
+            if(yh>=part.y-EPS&&yh<=part.y+part.h+EPS)
+              nearest={t:t0,type:'boundary',side:'left'};
+          }
+        }
+        if(dir.x>0){
+          const t0=(part.x+part.w-p.x)/dir.x;
+          if(t0>EPS&&t0<nearest.t){
+            const yh=p.y+dir.y*t0;
+            if(yh>=part.y-EPS&&yh<=part.y+part.h+EPS)
+              nearest={t:t0,type:'boundary',side:'right'};
+          }
+        }
+
+        // top / return
+        if(dir.y<0){
+          const t0=(part.y-p.y)/dir.y;
+          if(t0>EPS&&t0<nearest.t){
+            const xh=p.x+dir.x*t0;
+            if(xh>=part.x-EPS&&xh<=part.x+part.w+EPS){
+              if(xh>=trans.x-EPS&&xh<=trans.x+trans.w+EPS){
+                nearest={t:t0,type:'return'}; returned=true;
+              } else {
+                nearest={t:t0,type:'boundary',side:'top'};
+              }
+            }
+          }
+        }
+
+        if(!isFinite(nearest.t)) break;
+
+        segDirs.push({...dir});
+        segE.push(energy);
+        const hit={x:p.x+dir.x*nearest.t,y:p.y+dir.y*nearest.t};
+        pts.push(hit);
+        if(nearest.type==='return') break;
+
+        let N=nearest.normal;
+        if(nearest.type==='flaw'&&dot(dir,N)>0) N={x:-N.x,y:-N.y};
+        if(nearest.type==='boundary'){
+          switch(nearest.side){
+            case 'left':   N={x:1,y:0};  break;
+            case 'right':  N={x:-1,y:0}; break;
+            case 'top':    N={x:0,y:1};  break;
+            case 'bottom': N={x:0,y:-1}; break;
+          }
+        }
+        dir=reflect(dir,N);
+        p={x:hit.x+dir.x*EPS,y:hit.y+dir.y*EPS};
+        energy*=DECAY;
+        if(energy<0.02) break;
+      }
+
+      // distances
+      const cum=[0];
+      for(let m=1;m<pts.length;m++){
+        cum.push(cum[m-1]+len(sub(pts[m],pts[m-1])));
+      }
+
+      rays.push({
+        pts, segDirs, segE, cum,
+        total:cum[cum.length-1],
+        returns:returned
+      });
+    }
+    return rays;
+  }
+
+  // Function to update and interpolate A-scan echoes for smooth animation
+  function updateAndGetAnimatedEchoes(actualEchoes) {
+    const newAnimatedEchoes = [];
+    const matchedActualIndices = new Set();
+
+    // 1. Try to update existing animated echoes or mark them for removal
+    animatedEchoes.forEach(animEcho => {
+        let bestMatch = null;
+        let smallestTofDiff = TOF_MATCH_THRESHOLD;
+        let bestMatchIndex = -1;
+
+        actualEchoes.forEach((actualEcho, index) => {
+            if (matchedActualIndices.has(index)) return; // Already matched this actual echo
+
+            const tofDiff = Math.abs(actualEcho.tof - animEcho.currentTof);
+            if (tofDiff < smallestTofDiff) {
+                smallestTofDiff = tofDiff;
+                bestMatch = actualEcho;
+                bestMatchIndex = index;
+            }
+        });
+
+        if (bestMatch) {
+            animEcho.targetAmp = bestMatch.amp;
+            animEcho.targetTof = bestMatch.tof;
+            // originalTof is kept from the echo's "birth" for consistent matching
+            matchedActualIndices.add(bestMatchIndex);
+            newAnimatedEchoes.push(animEcho);
+        } else {
+            // This animated echo has no match, so it's disappearing
+            animEcho.targetAmp = 0;
+            if (animEcho.currentAmp > 0.01) { // Keep it if still visible
+                newAnimatedEchoes.push(animEcho);
+            }
+        }
+    });
+
+    // 2. Add new actual echoes that weren't matched
+    actualEchoes.forEach((actualEcho, index) => {
+        if (!matchedActualIndices.has(index)) {
+            newAnimatedEchoes.push({
+                id: nextEchoId++,
+                currentAmp: 0, // Start new echoes with 0 amplitude
+                targetAmp: actualEcho.amp,
+                currentTof: actualEcho.tof, // New echoes appear at their target TOF
+                targetTof: actualEcho.tof,
+                originalTof: actualEcho.tof // Store its first TOF for future matching
+            });
+        }
+    });
+
+    // 3. Perform interpolation for all echoes
+    newAnimatedEchoes.forEach(animEcho => {
+        animEcho.currentAmp += (animEcho.targetAmp - animEcho.currentAmp) * LERP_FACTOR;
+        animEcho.currentTof += (animEcho.targetTof - animEcho.currentTof) * LERP_FACTOR;
+        // Clamp amplitude if fading out
+        if (animEcho.targetAmp === 0 && animEcho.currentAmp < 0.001) {
+            animEcho.currentAmp = 0;
+        }
+    });
+
+    // 4. Update global animatedEchoes list, filtering out fully faded echoes
+    animatedEchoes = newAnimatedEchoes.filter(ae => !(ae.targetAmp === 0 && ae.currentAmp === 0));
+    return animatedEchoes;
+}
+
+  // ————— Draw realistic A‑scan spikes —————
+  // ————— Draw A‑scan with pointy triangular spikes —————
+function drawAScan(displayEchoes){ // Added displayEchoes parameter
+  const w    = ascan.width;
+  const h    = ascan.height;
+  const ctx2 = ascanCtx;
+
+  // background
+  ctx2.fillStyle   = '#003300';
+  ctx2.fillRect(0, 0, w, h);
+
+  // grid
+  ctx2.strokeStyle = '#004400';
+  ctx2.lineWidth   = 1;
+  for(let x = 0; x <= w; x += 50){
+    ctx2.beginPath();
+    ctx2.moveTo(x, 0);
+    ctx2.lineTo(x, h);
+    ctx2.stroke();
+  }
+  for(let y = 0; y <= h; y += 20){
+    ctx2.beginPath();
+    ctx2.moveTo(0, y);
+    ctx2.lineTo(w, y);
+    ctx2.stroke();
+  }
+
+  // baseline
+  const baseY = h * 0.8;
+  ctx2.strokeStyle = '#00ff00';
+  ctx2.lineWidth   = 2;
+  ctx2.beginPath();
+  ctx2.moveTo(0, baseY);
+  ctx2.lineTo(w, baseY);
+  ctx2.stroke();
+
+  // If no echoes to display, nothing to draw for spikes
+  if (!displayEchoes || displayEchoes.length === 0) {
+    return;
+  }
+
+  // fixed two‑way time window (with 5% margin)
+  const windowT = (2 * part.h) / SPEED * 1.05;
+
+  // draw pointy triangular spikes
+  ctx2.fillStyle = '#00ff00';
+  const W = 4; // half‑width of each triangle
+  displayEchoes.forEach(echo => {
+    // Skip drawing if amplitude is negligible
+    if (echo.currentAmp < 0.01) return;
+
+    const x0 = (echo.currentTof / windowT) * w; // Use interpolated TOF
+    const flickerFactor = 0.95 + Math.random() * 0.1;
+    const effectiveAmp = echo.currentAmp * flickerFactor; // Use interpolated amplitude with flicker
+    const spikeH = effectiveAmp * (baseY * 0.9);
+    
+    // Ensure spikeH is not negative
+    const finalSpikeH = Math.max(0, spikeH);
+
+    ctx2.beginPath();
+    // Use finalSpikeH for drawing
+    ctx2.moveTo(x0 - W,         baseY);
+    ctx2.lineTo(x0,             baseY - finalSpikeH);
+    ctx2.lineTo(x0 + W,         baseY);
+    ctx2.closePath();
+    ctx2.fill();
+  });
+}
+
+
+  // ————— Draw & animate —————
+  function draw(ts){
+    const t=ts/1000;
+
+    // emit new pulse
+    if(t-lastEmission>=EMIT_PERIOD){
+      lastEmission=t;
+      const rays=computeRays();
+      pulses.push(new Pulse(t, rays));
+      if(pulses.length>MAX_PULSES) pulses.shift();
+    }
+
+    // clear main
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // draw block, flaws, transducer...
+    // Part object with rounded corners
+    ctx.fillStyle='#ccc';
+    drawRoundedRect(ctx, part.x, part.y, part.w, part.h, 5);
+    ctx.fill();
+    ctx.strokeStyle='#888';
+    // Redraw path for stroke as fill consumes it
+    drawRoundedRect(ctx, part.x, part.y, part.w, part.h, 5);
+    ctx.stroke();
+    flaws.forEach(f=>{
+      ctx.fillStyle='rgba(150,0,0,0.7)'; /* Darker red for flaws */
+      ctx.strokeStyle='#a00';
+      ctx.lineWidth=1;
+      if(f.type==='rectangle'){
+        ctx.fillRect(f.x,f.y,f.w,f.h);
+        ctx.strokeRect(f.x,f.y,f.w,f.h);
+      } else if(f.type==='circle'){
+        ctx.beginPath();
+        ctx.arc(f.cx,f.cy,f.radius,0,2*Math.PI);
+        ctx.fill(); ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(f.points[0].x,f.points[0].y);
+        f.points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+    });
+    ctx.fillStyle='#444';
+    ctx.fillRect(trans.x,trans.y,trans.w,trans.h);
+    ctx.strokeStyle='#000';
+    ctx.strokeRect(trans.x,trans.y,trans.w,trans.h);
+    // Add text to transducer
+    ctx.fillStyle = '#d3d3d3'; // Light gray text
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('TRANSDUCER', trans.x + trans.w / 2, trans.y + trans.h / 2);
+
+    // draw rays & animated pulses (as before)...
+    const rays=computeRays(),
+          maxTotal=Math.max(...rays.map(r=>r.total)),
+          fullTime=maxTotal/SPEED,
+          returnTs=rays.filter(r=>r.returns).map(r=>r.total/SPEED),
+          minRet=returnTs.length?Math.min(...returnTs):0,
+          lifetime=Math.max(fullTime*LIFETIME_FACTOR, minRet+0.05);
+
+    // filter by lifetime
+    pulses = pulses.filter(p=> t - p.emissionTime <= lifetime);
+
+    // static skeleton
+    rays.forEach(ray=>{
+      const [r,g,b]=ray.returns?[0,0,255]:[0,0,0];
+      ray.pts.slice(0,-1).forEach((p0,i)=>{
+        const p1=ray.pts[i+1], alpha=ray.segE[i]*0.4;
+        ctx.beginPath();
+        ctx.strokeStyle=`rgba(${r},${g},${b},${alpha})`;
+        ctx.moveTo(p0.x,p0.y);
+        ctx.lineTo(p1.x,p1.y);
+        ctx.stroke();
+      });
+    });
+
+    // animated pulses
+    rays.forEach(ray=>{
+      pulses.forEach(pl=>{
+        const age=t-pl.emissionTime;
+        if(age<0||age>lifetime) return;
+        const d=age*SPEED;
+        if(d>ray.total) return;
+        let idx=ray.cum.findIndex(c=>c>=d);
+        idx=idx<1?1:idx;
+        const d0=ray.cum[idx-1], d1=ray.cum[idx],
+              frac=(d-d0)/(d1-d0),
+              p0=ray.pts[idx-1], p1=ray.pts[idx],
+              x=p0.x+(p1.x-p0.x)*frac,
+              y=p0.y+(p1.y-p0.y)*frac,
+              dir=ray.segDirs[idx-1],
+              perp=normalize({x:-dir.y,y:dir.x}),
+              E=ray.segE[idx-1],
+              fade=1-(age/lifetime),
+              alpha=E*fade;
+        if(alpha<0.01) return;
+        const [cr,cg,cb]=dir.y<0?[0,0,255]:[0,0,0];
+
+        const L=20,A=L*0.1,N=16;
+        ctx.beginPath();
+        for(let j=0;j<=N;j++){
+          const u=j/N,u2=u-0.5,
+                bx=x+perp.x*(u2*L),
+                by=y+perp.y*(u2*L),
+                bulge=A*(1-4*u2*u2),
+                px=bx+dir.x*bulge,
+                py=by+dir.y*bulge;
+          if(j===0) ctx.moveTo(px,py);
+          else      ctx.lineTo(px,py);
+        }
+        ctx.strokeStyle=`rgba(${cr},${cg},${cb},${alpha})`;
+        ctx.lineWidth=2;
+        ctx.stroke();
+      });
+    });
+
+    // Update and get animated echoes for A-scan
+  const actualEchoes = (pulses.length > 0 && pulses[pulses.length - 1].echoes) ? pulses[pulses.length - 1].echoes : [];
+  const displayEchoesForAScan = updateAndGetAnimatedEchoes(actualEchoes);
+
+  // draw the realistic A-scan spikes
+  drawAScan(displayEchoesForAScan);
+
+  requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
