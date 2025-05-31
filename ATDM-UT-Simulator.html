@@ -28,6 +28,89 @@
       margin: 10px 0; /* Provides space above and below */
       font-size: 14px;
     }
+
+    /* Realism Settings Panel Styles */
+    #realismSettingsPanel {
+      background-color: #5a5a5a; /* Slightly lighter than overallContainer for contrast */
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column; /* Stack settings groups vertically */
+      align-items: center;
+      gap: 10px; /* Space between settings groups/items */
+    }
+    .settings-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 5px; /* Space below each individual setting line */
+    }
+    #realismSettingsPanel h4 {
+      color: #e0e0e0;
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 16px;
+      text-align: center;
+      width: 100%;
+    }
+    #realismSettingsPanel label {
+      color: #f0f0f0;
+      font-size: 14px;
+    }
+
+    /* Toggle Switch CSS */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px; /* Reduced width */
+      height: 28px; /* Reduced height */
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #777; /* Darker gray when off */
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px; /* Reduced knob height */
+      width: 20px;  /* Reduced knob width */
+      left: 4px;    /* Adjusted knob position */
+      bottom: 4px;  /* Adjusted knob position */
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    input:checked + .slider {
+      background-color: #007bff; /* Blue when on - can be changed */
+    }
+    input:focus + .slider {
+      box-shadow: 0 0 1px #007bff;
+    }
+    input:checked + .slider:before {
+      -webkit-transform: translateX(22px); /* Adjusted translation */
+      -ms-transform: translateX(22px);
+      transform: translateX(22px);
+    }
+    .slider.round {
+      border-radius: 28px; /* Fully rounded */
+    }
+    .slider.round:before {
+      border-radius: 50%;
+    }
   </style>
 </head>
 <body>
@@ -38,6 +121,26 @@
     <div id="instructionText">Slide the transducer above to simulate acoustics.</div>
     <!-- A‑scan display -->
     <canvas id="ascan"  width="800" height="200"></canvas>
+
+    <!-- Realism Settings Panel -->
+    <div id="realismSettingsPanel">
+      <h4>Advanced Settings</h4>
+      <div class="settings-group">
+        <label for="toggleRepeatSignals">Show Repeat Signals:</label>
+        <label class="switch">
+          <input type="checkbox" id="toggleRepeatSignals" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+      
+      <div class="settings-group">
+        <label for="toggleInitialPulse">Show Initial Pulse:</label>
+        <label class="switch">
+          <input type="checkbox" id="toggleInitialPulse" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -75,7 +178,18 @@
         LIFETIME_FACTOR = 0.3,
         EPS             = 1e-3,
         DECAY           = 0.7,      // energy per bounce
-        MAX_PULSES      = 5;        // recent pulses to remember
+        MAX_PULSES      = 5,        // recent pulses to remember
+        MAX_DETECTED_REPEATS = 5, // Max times a wave reflects off transducer and re-enters
+        MAX_TOF_DISPLAY = 20.0; // Max time (seconds) to display on A-scan (increased for better echo separation)
+
+  // ————— Realism Settings —————
+  const realismSettings = {
+    frontFaceEnabled: true,    // From memory: for front-face reflection echo
+    reverberationEnabled: true,  // From memory: for A-scan back-wall reverberations
+    decayPerBounce: 0.8,       // From memory: decay factor for A-scan reverberations
+    showRepeatSignals: true,     // New: for showing ray-traced repeat signals from transducer
+    showInitialPulse: true       // New: for showing the main bang/initial pulse
+  };
 
   // ————— Canvas setup —————
   const canvas   = document.getElementById('canvas'),
@@ -102,13 +216,33 @@
   class Pulse {
     constructor(t0, rays){
       this.emissionTime = t0;
-      this.echoes = rays
-        .filter(r=>r.returns)
-        .map(r=>({
-          tof: r.total / SPEED,
-          amp: r.segE[r.segE.length-1]
-        }))
-        .sort((a,b)=>a.tof - b.tof);
+      this.echoes = [];
+
+      // Add Initial Pulse if enabled
+      if (realismSettings.showInitialPulse) {
+        this.echoes.push({ tof: 0.001, amp: 0.9 }); // Strong pulse at the very beginning
+      }
+
+      rays.forEach(ray => {
+        if (ray.detectedEchoes && ray.detectedEchoes.length > 0) {
+          ray.detectedEchoes.forEach(echo => {
+            const finalAmp = Math.max(0, echo.amp);
+            if (finalAmp > 0.01) { // Only add echoes with significant amplitude
+                this.echoes.push({
+                    tof: echo.tof,
+                    amp: finalAmp
+                });
+            }
+          });
+        }
+      });
+      this.echoes.sort((a,b) => a.tof - b.tof);
+
+      // Note: MEMORY[87655c19-d956-4f7e-b144-e78b2d36aff6] (realismSettings)
+      // previously modified this constructor for specific front-face/reverb effects.
+      // The current changes implement a more fundamental, general reverberation.
+      // If those realismSettings are still active and intended to provide
+      // additional/different effects, further integration would be needed here.
     }
   }
 
@@ -117,7 +251,7 @@
 
   // Globals for A-scan animation
   let animatedEchoes = []; 
-  const LERP_FACTOR = 0.15; // Interpolation speed (0 to 1, higher is faster)
+  const LERP_FACTOR = 0.3; // Interpolation speed (0 to 1, higher is faster) - Increased for faster transitions
   const TOF_MATCH_THRESHOLD = 0.01; // Max TOF difference (seconds) to consider echoes the same
   let nextEchoId = 0; // For uniquely identifying animated echoes (optional, for debugging)
 
@@ -181,7 +315,9 @@
     for(let i=0;i<numRays;i++){
       const ang = -spread/2 + (i/(numRays-1))*spread;
       let dir=normalize({x:Math.sin(ang), y:Math.cos(ang)}),
-          p={x:cx,y:cy}, energy=1, returned=false;
+        p={x:cx,y:cy}, energy=1;
+    const detectedEchoes = []; // Store multiple echoes for this ray
+    let detectedRepeatsCount = 0; // Count reflections off transducer
       const pts=[{...p}], segDirs=[], segE=[];
       for(let b=0;b<maxBounces;b++){
         let nearest={t:Infinity,type:null,side:null,normal:null};
@@ -244,8 +380,8 @@
                       det=seg.x*dir.y-seg.y*dir.x;
                 if(Math.abs(det)<=EPS) continue;
                 const tRay=(rdx*(-seg.y)-rdy*(-seg.x))/
-                           (dir.x*(-seg.y)-dir.y*(-seg.x)),
-                      uSeg=(dir.x*rdy-dir.y*rdx)/
+                           (dir.x*(-seg.y)-dir.y*(-seg.x));
+                const uSeg=(dir.x*rdy-dir.y*rdx)/
                            (dir.x*(-seg.y)-dir.y*(-seg.x));
                 if(tRay>EPS&&tRay<nearest.t&&uSeg>=0&&uSeg<=1){
                   const nrm=normalize({x:-(p2.y-p1.y),y:(p2.x-p1.x)});
@@ -274,20 +410,47 @@
           }
         }
 
-        // top / return
-        if(dir.y<0){
-          const t0=(part.y-p.y)/dir.y;
-          if(t0>EPS&&t0<nearest.t){
-            const xh=p.x+dir.x*t0;
-            if(xh>=part.x-EPS&&xh<=part.x+part.w+EPS){
-              if(xh>=trans.x-EPS&&xh<=trans.x+trans.w+EPS){
-                nearest={t:t0,type:'return'}; returned=true;
-              } else {
-                nearest={t:t0,type:'boundary',side:'top'};
+        // top / return (modified for multiple reflections)
+      if(dir.y<0){ // Moving upwards
+        const t0=(part.y-p.y)/dir.y; // Time to hit plane y = part.y
+        if(t0>EPS && t0<nearest.t){
+          const xh=p.x+dir.x*t0; // x-coordinate of hit on top surface
+          // Check if hit is within the physical part boundaries
+          if(xh >= part.x - EPS && xh <= part.x + part.w + EPS){
+            // Hit is on the top surface of the part
+            if(xh >= trans.x - EPS && xh <= trans.x + trans.w + EPS){ // Hit is ON THE TRANSDUCER
+              // This is a detection point. Calculate TOF and add to detectedEchoes.
+              let pathLengthToCurrent_p = 0;
+              for(let k=0; k < pts.length - 1; k++) {
+                  pathLengthToCurrent_p += len(sub(pts[k+1], pts[k]));
               }
+              const totalPathToHit = pathLengthToCurrent_p + t0;
+              const tofToHit = totalPathToHit / SPEED;
+              
+              // Condition for recording an echo:
+              // 1. It's the first time this ray hits the transducer (detectedRepeatsCount is 0).
+              // OR
+              // 2. Repeat signals are enabled, and we haven't hit the max repeats for this ray.
+              if (detectedRepeatsCount === 0 || (realismSettings.showRepeatSignals && detectedRepeatsCount < MAX_DETECTED_REPEATS)) {
+                  detectedEchoes.push({ tof: tofToHit, amp: energy });
+              }
+
+              // Condition for reflecting and continuing the ray path:
+              if (realismSettings.showRepeatSignals && detectedRepeatsCount < MAX_DETECTED_REPEATS) {
+                  detectedRepeatsCount++; // Increment count *only if* it's going to reflect and continue.
+                  nearest={t:t0, type:'boundary', side:'top_transducer_reflect'}; // Reflect for more repeats.
+              } else {
+                  // Repeats are OFF OR max repeats for this ray have been reached.
+                  // Terminate ray path (absorbed by transducer).
+                  nearest={t:t0, type:'return_max_repeats'};
+              }
+            } else {
+              // Hit is on top surface BUT OUTSIDE transducer
+              nearest={t:t0, type:'boundary', side:'top'};
             }
           }
         }
+      }
 
         if(!isFinite(nearest.t)) break;
 
@@ -295,7 +458,7 @@
         segE.push(energy);
         const hit={x:p.x+dir.x*nearest.t,y:p.y+dir.y*nearest.t};
         pts.push(hit);
-        if(nearest.type==='return') break;
+        if(nearest.type==='return_max_repeats') break; // Stop if max repeats hit at transducer
 
         let N=nearest.normal;
         if(nearest.type==='flaw'&&dot(dir,N)>0) N={x:-N.x,y:-N.y};
@@ -305,7 +468,8 @@
             case 'right':  N={x:-1,y:0}; break;
             case 'top':    N={x:0,y:1};  break;
             case 'bottom': N={x:0,y:-1}; break;
-          }
+          case 'top_transducer_reflect': N={x:0,y:1}; break; // Ray reflects downwards
+        }
         }
         dir=reflect(dir,N);
         p={x:hit.x+dir.x*EPS,y:hit.y+dir.y*EPS};
@@ -320,10 +484,10 @@
       }
 
       rays.push({
-        pts, segDirs, segE, cum,
-        total:cum[cum.length-1],
-        returns:returned
-      });
+      pts, segDirs, segE, cum,
+      detectedEchoes, // Pass the array of detected echoes
+      finalTotalPath: cum[cum.length-1] // Keep total path for potential other uses/debugging
+    });
     }
     return rays;
   }
@@ -435,8 +599,8 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
     return;
   }
 
-  // fixed two‑way time window (with 5% margin)
-  const windowT = (2 * part.h) / SPEED * 1.05;
+  // Set a fixed time window to display multiple reverberations
+  const windowT = 20.0; // Time window in seconds (e.g., to show up to ~3-4 backwall echoes)
 
   // draw pointy triangular spikes
   ctx2.fillStyle = '#00ff00';
@@ -518,19 +682,25 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
     ctx.fillText('TRANSDUCER', trans.x + trans.w / 2, trans.y + trans.h / 2);
 
     // draw rays & animated pulses (as before)...
-    const rays=computeRays(),
-          maxTotal=Math.max(...rays.map(r=>r.total)),
-          fullTime=maxTotal/SPEED,
-          returnTs=rays.filter(r=>r.returns).map(r=>r.total/SPEED),
-          minRet=returnTs.length?Math.min(...returnTs):0,
-          lifetime=Math.max(fullTime*LIFETIME_FACTOR, minRet+0.05);
+    const rays=computeRays();
+    const allFinalPaths = rays.map(r => r.finalTotalPath);
+    const maxTotal = allFinalPaths.length > 0 ? Math.max(0, ...allFinalPaths) : 0; // Added Math.max(0,...) for safety
+    const fullTime = maxTotal / SPEED;
+
+    // Get all TOFs from the latest pulse for lifetime calculation
+    const latestPulseEchoTofs = (pulses.length > 0 && pulses[pulses.length - 1].echoes)
+                               ? pulses[pulses.length - 1].echoes.map(e => e.tof)
+                               : [];
+    const minDetectedTof = latestPulseEchoTofs.length > 0 ? Math.min(...latestPulseEchoTofs) : 0;
+    const lifetime = Math.max(fullTime * LIFETIME_FACTOR, minDetectedTof + 0.05);
 
     // filter by lifetime
     pulses = pulses.filter(p=> t - p.emissionTime <= lifetime);
 
     // static skeleton
     rays.forEach(ray=>{
-      const [r,g,b]=ray.returns?[0,0,255]:[0,0,0];
+      const hasDetections = ray.detectedEchoes && ray.detectedEchoes.length > 0;
+      const [r,g,b] = hasDetections ? [0,0,255] : [0,0,0]; // Blue if detected, else black
       ray.pts.slice(0,-1).forEach((p0,i)=>{
         const p1=ray.pts[i+1], alpha=ray.segE[i]*0.4;
         ctx.beginPath();
@@ -547,7 +717,7 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
         const age=t-pl.emissionTime;
         if(age<0||age>lifetime) return;
         const d=age*SPEED;
-        if(d>ray.total) return;
+        if(d>ray.finalTotalPath) return;
         let idx=ray.cum.findIndex(c=>c>=d);
         idx=idx<1?1:idx;
         const d0=ray.cum[idx-1], d1=ray.cum[idx],
@@ -589,6 +759,27 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
   drawAScan(displayEchoesForAScan);
 
   requestAnimationFrame(draw);
+  }
+
+  // Event Listener for the toggle switch
+  const toggleRepeatSignalsSwitch = document.getElementById('toggleRepeatSignals');
+  if (toggleRepeatSignalsSwitch) {
+    toggleRepeatSignalsSwitch.checked = realismSettings.showRepeatSignals;
+    toggleRepeatSignalsSwitch.addEventListener('change', function() {
+      realismSettings.showRepeatSignals = this.checked;
+      // Optional: force a redraw or re-computation if needed immediately
+      // lastEmission = -Infinity; // To force new pulse on next frame if transducer hasn't moved
+      // requestAnimationFrame(draw); // if draw isn't already continuously running
+    });
+  }
+
+  // Event Listener for the initial pulse toggle switch
+  const toggleInitialPulseSwitch = document.getElementById('toggleInitialPulse');
+  if (toggleInitialPulseSwitch) {
+    toggleInitialPulseSwitch.checked = realismSettings.showInitialPulse;
+    toggleInitialPulseSwitch.addEventListener('change', function() {
+      realismSettings.showInitialPulse = this.checked;
+    });
   }
 
   requestAnimationFrame(draw);
