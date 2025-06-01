@@ -360,15 +360,94 @@
   let trans    = { x:canvas.width/2-40, y:part.y-20, w:80, h:20 };
   let dragging = false, dragOffX = 0;
 
-  const flaws = [
-    { type:'rectangle', x:150, y:160, w:60,  h:20 },
-    { type:'circle',    cx:300, cy:200, radius:25 },
-    { type:'polygon',   points:[
-        {x:450,y:140},{x:520,y:150},{x:500,y:200},{x:430,y:190}
-      ]
-    },
-    { type:'rectangle', x:600, y:220, w:50,  h:30 }
-  ];
+  const flaws = []; // Initialize an empty flaws array
+
+// Helper function for random perturbation
+function perturb(value, amount = 4) {
+  return value + (Math.random() - 0.5) * 2 * amount;
+}
+
+// 1. Create a jagged version of the first rectangle
+const rect1 = { x:150, y:160, w:60, h:20 };
+flaws.push({
+  type: 'polygon',
+  points: [
+    { x: rect1.x, y: rect1.y }, // Top-left (anchor)
+    { x: perturb(rect1.x + rect1.w / 2), y: perturb(rect1.y) }, // Mid-top
+    { x: perturb(rect1.x + rect1.w), y: perturb(rect1.y) },     // Top-right
+    { x: perturb(rect1.x + rect1.w), y: perturb(rect1.y + rect1.h / 2) }, // Mid-right
+    { x: perturb(rect1.x + rect1.w), y: perturb(rect1.y + rect1.h) }, // Bottom-right
+    { x: perturb(rect1.x + rect1.w / 2), y: perturb(rect1.y + rect1.h) }, // Mid-bottom
+    { x: perturb(rect1.x), y: perturb(rect1.y + rect1.h) },     // Bottom-left
+    { x: perturb(rect1.x), y: perturb(rect1.y + rect1.h / 2) }  // Mid-left
+  ]
+});
+
+// 2. Add the original circle flaw
+flaws.push({ type:'circle', cx:300, cy:200, radius:25 });
+
+// 3. Create a jagged version of the original polygon
+const originalPolygonPoints = [
+  {x:450,y:140},{x:520,y:150},{x:500,y:200},{x:430,y:190}
+];
+const jaggedPolygonPoints = originalPolygonPoints.map((p, index) => {
+  // Don't perturb the first point too much to keep general shape
+  const perturbationAmount = index === 0 ? 2 : 5;
+  return { x: perturb(p.x, perturbationAmount), y: perturb(p.y, perturbationAmount) };
+});
+flaws.push({
+  type: 'polygon',
+  points: jaggedPolygonPoints
+});
+// Note: The second original rectangle is intentionally omitted and replaced by porosity later.
+
+
+// Add Porosity Cluster (replaces the second original rectangle)
+const porosityClusterConfig = {
+    x_center: part.x + part.w - 35, // Swapped with crack xCenter
+    y_center: part.y + part.h - 50, // Approx 50px from bottom of part
+    spreadX: 25,
+    spreadY: 20,
+    numPores: 10,
+    minRadius: 2,
+    maxRadius: 5
+};
+
+for (let i = 0; i < porosityClusterConfig.numPores; i++) {
+    flaws.push({
+        type: 'circle',
+        cx: porosityClusterConfig.x_center + (Math.random() - 0.5) * 2 * porosityClusterConfig.spreadX,
+        cy: porosityClusterConfig.y_center + (Math.random() - 0.5) * 2 * porosityClusterConfig.spreadY,
+        radius: porosityClusterConfig.minRadius + Math.random() * (porosityClusterConfig.maxRadius - porosityClusterConfig.minRadius)
+    });
+}
+
+// Add a jagged, vertically oriented crack
+const crackParams = {
+  xCenter: 625, // Swapped with porosity cluster x_center
+  yStart: part.y + part.h * 0.25,
+  length: part.h * 0.5, // Make it about half the part height
+  width: 5, // Average width of the crack
+  segments: 7, // Number of segments along one side of the crack
+  jaggedness: 3 // Max pixels for x-perturbation
+};
+
+const crackPoints = [];
+// Generate points for the 'left' side of the crack, going downwards
+for (let i = 0; i <= crackParams.segments; i++) {
+  const yPos = crackParams.yStart + (i / crackParams.segments) * crackParams.length;
+  const xPos = perturb(crackParams.xCenter - crackParams.width / 2, crackParams.jaggedness);
+  crackPoints.push({ x: xPos, y: yPos });
+}
+
+// Generate points for the 'right' side of the crack, going upwards (to maintain winding order)
+for (let i = crackParams.segments; i >= 0; i--) {
+  const yPos = crackParams.yStart + (i / crackParams.segments) * crackParams.length;
+  const xPos = perturb(crackParams.xCenter + crackParams.width / 2, crackParams.jaggedness);
+  crackPoints.push({ x: xPos, y: yPos });
+}
+
+flaws.push({ type: 'polygon', points: crackPoints });
 
   // ————— Pulse tracking —————
   class Pulse {
@@ -1007,21 +1086,56 @@ function drawAScan(displayEchoes) {
     drawRoundedRect(ctx, part.x, part.y, part.w, part.h, 5);
     ctx.stroke();
     flaws.forEach(f=>{
-      ctx.fillStyle='rgba(20, 20, 20, 0.85)'; /* Very dark gray for flaws */
       ctx.strokeStyle='#000000'; /* Black border for flaws */
       ctx.lineWidth=1;
-      if(f.type==='rectangle'){
-        ctx.fillRect(f.x,f.y,f.w,f.h);
-        ctx.strokeRect(f.x,f.y,f.w,f.h);
-      } else if(f.type==='circle'){
-        ctx.beginPath();
-        ctx.arc(f.cx,f.cy,f.radius,0,2*Math.PI);
-        ctx.fill(); ctx.stroke();
-      } else {
-        ctx.beginPath();
-        ctx.moveTo(f.points[0].x,f.points[0].y);
-        f.points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
-        ctx.closePath(); ctx.fill(); ctx.stroke();
+      switch (f.type) {
+        case 'rectangle':
+          {
+            const grad = ctx.createLinearGradient(f.x, f.y, f.x, f.y + f.h); // Vertical gradient
+            grad.addColorStop(0, 'rgba(60,60,60,0.9)'); // Dark gray
+            grad.addColorStop(1, 'rgba(20,20,20,0.7)'); // Very dark gray/black
+            ctx.fillStyle = grad;
+            ctx.fillRect(f.x,f.y,f.w,f.h);
+            ctx.strokeRect(f.x,f.y,f.w,f.h); // Stroke is maintained
+          }
+          break;
+        case 'circle':
+          {
+            ctx.beginPath();
+            ctx.arc(f.cx,f.cy,f.radius,0,2*Math.PI);
+            const grad = ctx.createRadialGradient(f.cx, f.cy, f.radius * 0.1, f.cx, f.cy, f.radius);
+            grad.addColorStop(0, 'rgba(60,60,60,0.9)'); // Dark gray center
+            grad.addColorStop(1, 'rgba(20,20,20,0.7)'); // Very dark gray/black edge
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.stroke(); // Stroke is maintained
+          }
+          break;
+        default:
+          {
+            ctx.beginPath();
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            f.points.forEach((pt,i)=>{
+              if(i===0) ctx.moveTo(pt.x,pt.y);
+              else ctx.lineTo(pt.x,pt.y);
+              minX = Math.min(minX, pt.x);
+              maxX = Math.max(maxX, pt.x);
+              minY = Math.min(minY, pt.y);
+              maxY = Math.max(maxY, pt.y);
+            });
+            ctx.closePath();
+
+            if (minX !== Infinity && maxX !== -Infinity && minY !== Infinity && maxY !== -Infinity && (maxX > minX || maxY > minY)) {
+              const grad = ctx.createLinearGradient(minX, minY, maxX, minY); // Horizontal gradient across bounding box
+              grad.addColorStop(0, 'rgba(60,60,60,0.9)'); // Dark gray
+              grad.addColorStop(1, 'rgba(20,20,20,0.7)'); // Very dark gray/black
+              ctx.fillStyle = grad;
+            } else {
+              ctx.fillStyle = 'rgba(40,40,40,0.7)'; // Fallback solid dark gray
+            }
+            ctx.fill();
+            ctx.stroke(); // Stroke is maintained
+          }
       }
     });
     // "Top hat" part of the transducer
@@ -1045,16 +1159,21 @@ function drawAScan(displayEchoes) {
     ctx.clip();
 
     const checkerSize = 4;
-    const color1 = '#4a4a4a'; // Darker gray for checker
-    const color2 = '#606060'; // Lighter gray for checker
-
     for (let y = topHatY; y < topHatY + topHatHeight; y += checkerSize) {
       for (let x = topHatX; x < topHatX + topHatWidth; x += checkerSize) {
-        // Determine color based on position to create checkerboard
-        // Ensure we are using integer division for checkerboard logic
-        const row = Math.floor((y - topHatY) / checkerSize);
-        const col = Math.floor((x - topHatX) / checkerSize);
-        ctx.fillStyle = (row + col) % 2 === 0 ? color1 : color2;
+        const isColor1Base = ((Math.floor(x / checkerSize) % 2) === (Math.floor(y / checkerSize) % 2));
+        const grad = ctx.createLinearGradient(x, y, x + checkerSize, y + checkerSize); // Small diagonal gradient
+
+        if (isColor1Base) { // Corresponds to original color1
+          // Original color1 = '#4a4a4a' (Darker gray)
+          grad.addColorStop(0, '#555555'); 
+          grad.addColorStop(1, '#404040'); 
+        } else { // Corresponds to original color2
+          // Original color2 = '#606060' (Lighter gray)
+          grad.addColorStop(0, '#6b6b6b'); 
+          grad.addColorStop(1, '#555555'); 
+        }
+        ctx.fillStyle = grad;
         ctx.fillRect(x, y, checkerSize, checkerSize);
       }
     }
