@@ -4,59 +4,92 @@
   <meta charset="UTF-8">
   <title>Ultrasonic NDT Simulator + Realistic A‑Scan Spikes</title>
   <style>
-    body { margin:0; background:#313131; color: #f0f0f0; font-family: sans-serif; } /* Dark background, light text, default sans-serif */
+    :root {
+      --primary-bg: #1e1e1e;
+      --secondary-bg: #2d2d2d;
+      --tertiary-bg: #3c3c3c;
+      --button-hover-bg: #4f4f4f;
+      --text-color: #e0e0e0;
+      --secondary-text-color: #b0b0b0; /* Added for the #b0b0b0 case */
+      --accent-color: #007bff;
+      --explanation-border: #0056b3;
+      --correct-color: #28a745;
+      --incorrect-color: #dc3545;
+      --reveal-correct-border-color: #f0f0f0;
+      --disabled-opacity: 0.7;
+    }
+
+    body {
+      margin: 0;
+      background: var(--primary-bg);
+      color: var(--text-color);
+      font-family: sans-serif;
+    }
+
     #overallContainer {
-      background-color: #4a4a4a; /* Lighter gray than body */
+      background-color: var(--secondary-bg);
       padding: 20px;
       border-radius: 15px;
-      width: 800px; /* Content width, matches canvases */
-      margin: 30px auto; /* Center container with top/bottom margin */
+      width: 800px;
+      margin: 30px auto;
     }
-    canvas { display:block; /* Remove general margin, handle specifically or by container */ }
-    #canvas { 
-      background:#313131; 
-      margin-bottom: 10px; /* Space below main canvas */
+
+    canvas {
+      display: block;
     }
-    #ascan { 
-      background:#003300; 
-      border-radius: 10px; /* Rounded corners for A-scan canvas */
+
+    #canvas { /* Main simulation canvas */
+      background: var(--primary-bg); /* Or a slightly different dark shade if needed */
+      margin-bottom: 10px;
+      border: 1px solid var(--tertiary-bg); /* Optional: to define its edges */
     }
+
+    #ascan { /* A-Scan display canvas */
+      background: var(--secondary-bg); /* Consistent with containers */
+      border-radius: 10px;
+      border: 1px solid var(--tertiary-bg);
+    }
+
     #instructionText {
       text-align: center;
       font-family: sans-serif;
-      color: #cccccc; /* Light gray text for contrast */
-      margin: 10px 0; /* Provides space above and below */
+      color: var(--secondary-text-color); /* Using the secondary text color */
+      margin: 10px 0;
       font-size: 14px;
     }
 
     /* Realism Settings Panel Styles */
     #realismSettingsPanel {
-      background-color: #5a5a5a; /* Slightly lighter than overallContainer for contrast */
+      background-color: var(--tertiary-bg);
       padding: 15px;
       border-radius: 8px;
       margin-top: 15px;
       display: flex;
-      flex-direction: column; /* Stack settings groups vertically */
+      flex-direction: column;
       align-items: center;
-      gap: 10px; /* Space between settings groups/items */
+      gap: 10px;
     }
+
     .settings-group {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between; /* Better alignment for label and switch */
+      width: 90%; /* Or adjust as needed */
       gap: 15px;
-      margin-bottom: 5px; /* Space below each individual setting line */
+      margin-bottom: 5px;
     }
+
     #realismSettingsPanel h4 {
-      color: #e0e0e0;
+      color: var(--accent-color); /* Title in accent color */
       margin-top: 0;
       margin-bottom: 10px;
       font-size: 16px;
       text-align: center;
       width: 100%;
     }
+
     #realismSettingsPanel label {
-      color: #f0f0f0;
+      color: var(--text-color);
       font-size: 14px;
     }
 
@@ -64,14 +97,16 @@
     .switch {
       position: relative;
       display: inline-block;
-      width: 50px; /* Reduced width */
-      height: 28px; /* Reduced height */
+      width: 50px;
+      height: 28px;
     }
+
     .switch input { 
       opacity: 0;
       width: 0;
       height: 0;
     }
+
     .slider {
       position: absolute;
       cursor: pointer;
@@ -79,37 +114,127 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #777; /* Darker gray when off */
+      background-color: var(--secondary-bg); /* Off state */
       -webkit-transition: .4s;
       transition: .4s;
     }
+
     .slider:before {
       position: absolute;
       content: "";
-      height: 20px; /* Reduced knob height */
-      width: 20px;  /* Reduced knob width */
-      left: 4px;    /* Adjusted knob position */
-      bottom: 4px;  /* Adjusted knob position */
-      background-color: white;
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: var(--text-color); /* Knob color */
       -webkit-transition: .4s;
       transition: .4s;
     }
+
     input:checked + .slider {
-      background-color: #007bff; /* Blue when on - can be changed */
+      background-color: var(--accent-color); /* On state */
     }
+
     input:focus + .slider {
-      box-shadow: 0 0 1px #007bff;
+      box-shadow: 0 0 1px var(--accent-color);
     }
+
     input:checked + .slider:before {
-      -webkit-transform: translateX(22px); /* Adjusted translation */
+      -webkit-transform: translateX(22px);
       -ms-transform: translateX(22px);
       transform: translateX(22px);
     }
+
     .slider.round {
-      border-radius: 28px; /* Fully rounded */
+      border-radius: 28px;
     }
+
     .slider.round:before {
       border-radius: 50%;
+    }
+
+    /* General Button Styles (if any are added later) */
+    button, input[type="button"], input[type="submit"] {
+      background-color: var(--accent-color);
+      color: var(--text-color); 
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    button:hover, input[type="button"]:hover, input[type="submit"]:hover {
+      background-color: var(--explanation-border); /* For primary action buttons */
+    }
+    button.secondary:hover { /* Example for general interactive elements hover */
+        background-color: var(--button-hover-bg);
+    }
+    button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled {
+      opacity: var(--disabled-opacity);
+      cursor: not-allowed;
+      background-color: var(--tertiary-bg); 
+    }
+
+    /* Styles for quiz-like option buttons */
+    .option-button {
+      background-color: var(--tertiary-bg);
+      color: var(--text-color);
+      border: 1px solid var(--tertiary-bg);
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: left;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+      display: block; 
+      width: 100%; 
+      box-sizing: border-box; 
+    }
+    .option-button:hover {
+      background-color: var(--button-hover-bg);
+      border-color: var(--accent-color); 
+    }
+    .option-button.correct {
+      background-color: var(--correct-color);
+      color: #ffffff; /* Ensuring good contrast on green */
+      border-color: var(--correct-color);
+    }
+    .option-button.incorrect {
+      background-color: var(--incorrect-color);
+      color: #ffffff; /* Ensuring good contrast on red */
+      border-color: var(--incorrect-color);
+    }
+    .option-button.reveal-correct { /* For showing the correct answer after a wrong pick */
+      border: 2px dashed var(--reveal-correct-border-color);
+      background-color: var(--tertiary-bg); 
+      color: var(--text-color);
+    }
+    .option-button:disabled {
+        opacity: var(--disabled-opacity);
+        cursor: not-allowed;
+        background-color: var(--tertiary-bg);
+        color: var(--secondary-text-color);
+    }
+
+    /* Styles for feedback/explanation elements */
+    .feedback-panel { 
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+        background-color: var(--secondary-bg);
+    }
+    .feedback-panel.correct {
+      color: var(--correct-color);
+      border-left: 4px solid var(--correct-color);
+    }
+    .feedback-panel.incorrect {
+      color: var(--incorrect-color);
+      border-left: 4px solid var(--incorrect-color);
+    }
+    .feedback-panel.explanation { 
+      border-left: 4px solid var(--explanation-border);
+      color: var(--text-color);
     }
   </style>
 </head>
@@ -139,6 +264,32 @@
           <input type="checkbox" id="toggleInitialPulse" checked>
           <span class="slider round"></span>
         </label>
+      </div>
+      
+      <div class="settings-group">
+        <label for="toggleNoisySignals">Noisy Signals:</label>
+        <label class="switch">
+          <input type="checkbox" id="toggleNoisySignals" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+      
+      <div class="settings-group">
+        <label for="toggleSolidSpikes">Solid Spikes:</label>
+        <label class="switch">
+          <input type="checkbox" id="toggleSolidSpikes">
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="settings-group">
+        <label for="gainSlider">Gain (<span id="gainValue">1.0</span>x):</label>
+        <input type="range" id="gainSlider" min="0.1" max="5.0" value="1.0" step="0.1" class="slider-control">
+      </div>
+
+      <div class="settings-group">
+        <label for="rangeSlider">Range (<span id="rangeValue">1.0</span>x):</label>
+        <input type="range" id="rangeSlider" min="0.25" max="4.0" value="1.0" step="0.05" class="slider-control">
       </div>
     </div>
   </div>
@@ -172,15 +323,18 @@
   }
 
   // ————— Configuration —————
-  const PULSE_FREQUENCY = 1,        // Hz
-        EMIT_PERIOD     = 1/PULSE_FREQUENCY,
+  const CALCULATION_FREQUENCY = 5,  // Hz - For A-scan data updates
+        CALCULATION_EMIT_PERIOD = 1 / CALCULATION_FREQUENCY,
+        VISUAL_PULSE_FREQUENCY = 1, // Hz - For visual wave animations
+        VISUAL_EMIT_PERIOD = 1 / VISUAL_PULSE_FREQUENCY,
         SPEED           = 100,      // px/sec = sound speed
         LIFETIME_FACTOR = 0.3,
         EPS             = 1e-3,
         DECAY           = 0.7,      // energy per bounce
         MAX_PULSES      = 5,        // recent pulses to remember
         MAX_DETECTED_REPEATS = 5, // Max times a wave reflects off transducer and re-enters
-        MAX_TOF_DISPLAY = 20.0; // Max time (seconds) to display on A-scan (increased for better echo separation)
+        INITIAL_MAX_TOF_DISPLAY = 20.0; // Base max time (seconds) to display on A-scan
+  let currentMaxTofDisplay = INITIAL_MAX_TOF_DISPLAY; // Current max TOF, adjusted by rangeMultiplier
 
   // ————— Realism Settings —————
   const realismSettings = {
@@ -188,7 +342,11 @@
     reverberationEnabled: true,  // From memory: for A-scan back-wall reverberations
     decayPerBounce: 0.8,       // From memory: decay factor for A-scan reverberations
     showRepeatSignals: true,     // New: for showing ray-traced repeat signals from transducer
-    showInitialPulse: true       // New: for showing the main bang/initial pulse
+    showInitialPulse: true,      // New: for showing the main bang/initial pulse
+    noisySignalsEnabled: true,    // For baseline grass and signal jitter
+    solidSpikesEnabled: false,    // Spikes are hollow by default
+    gain: 1.0,                  // A-scan amplitude gain
+    rangeMultiplier: 1.0        // A-scan time range multiplier
   };
 
   // ————— Canvas setup —————
@@ -247,26 +405,44 @@
   }
 
   let lastEmission = -Infinity;
-  let pulses = []; // Array to store active pulses
+  let pulses = []; // Array to store active pulses for A-scan data
+  let lastVisualEmission = -Infinity;
+  let visualWaves = []; // Stores { emissionTime: t } for visual wave animations
 
   // Globals for A-scan animation
   let animatedEchoes = []; 
-  const LERP_FACTOR = 0.3; // Interpolation speed (0 to 1, higher is faster) - Increased for faster transitions
+  const LERP_FACTOR = 0.15; // Interpolation speed (0 to 1, higher is faster) - Smoother, more gradual transitions
   const TOF_MATCH_THRESHOLD = 0.01; // Max TOF difference (seconds) to consider echoes the same
   let nextEchoId = 0; // For uniquely identifying animated echoes (optional, for debugging)
+
+  // Noise generation state
+  let noiseFrameCounter = 0;
+  const NOISE_UPDATE_FRAME_INTERVAL = 8; // Update noise every N frames
+  const FALSE_SPIKE_UPDATE_MULTIPLIER = 4; // False spikes update N times less often
+  const LERP_FACTOR_FALSE_SPIKES = 0.1; // Animation speed for false spikes
+  const LERP_FACTOR_SIGNAL_JITTER = 0.1; // Animation speed for real signal jitter
+  let nextFalseSpikeId = 0;
+  let currentBaselineNoiseOffsets = [];
+  // currentAmplitudeJitterFactor and currentTofJitterOffset are now per-echo
+  let currentFalseSpikes = []; // Stores {tof, ampFraction} for false noise spikes
 
   // ————— Mouse drag for transducer —————
   canvas.addEventListener('mousedown', e=>{
     const m=getMouse(e);
-    if(m.x>=trans.x&&m.x<=trans.x+trans.w
-    && m.y>=trans.y&&m.y<=trans.y+trans.h){
+    const currentTopHatHeight = trans.h * 1.5;
+            const currentTopHatY = trans.y - currentTopHatHeight;
+            if(m.x >= trans.x && m.x <= trans.x + trans.w &&
+               m.y >= currentTopHatY && m.y <= trans.y + trans.h){
       dragging=true; dragOffX=m.x-trans.x;
       canvas.style.cursor = 'grabbing'; // Set cursor to grabbing when drag starts
     }
   });
   canvas.addEventListener('mousemove', e=>{
     const m=getMouse(e);
-    const isOverTransducer = m.x>=trans.x&&m.x<=trans.x+trans.w && m.y>=trans.y&&m.y<=trans.y+trans.h;
+    const currentTopHatHeight = trans.h * 1.5;
+            const currentTopHatY = trans.y - currentTopHatHeight;
+            const isOverTransducer = m.x >= trans.x && m.x <= trans.x + trans.w &&
+                                     m.y >= currentTopHatY && m.y <= trans.y + trans.h;
 
     if(dragging){
       trans.x = Math.min(part.x+part.w-trans.w,
@@ -287,7 +463,10 @@
         dragging = false;
         if (wasDragging) { 
           const m = getMouse(e);
-          const isOverTransducer = m.x >= trans.x && m.x <= trans.x + trans.w && m.y >= trans.y && m.y <= trans.y + trans.h;
+          const currentTopHatHeight = trans.h * 1.5;
+                  const currentTopHatY = trans.y - currentTopHatHeight;
+                  const isOverTransducer = m.x >= trans.x && m.x <= trans.x + trans.w &&
+                                             m.y >= currentTopHatY && m.y <= trans.y + trans.h;
           canvas.style.cursor = isOverTransducer ? 'grab' : 'default';
         }
       } else if (evtName === 'mouseleave') {
@@ -497,6 +676,23 @@
     const newAnimatedEchoes = [];
     const matchedActualIndices = new Set();
 
+    // Ensure all existing animatedEchoes (from global scope) have jitter properties before processing
+    animatedEchoes.forEach(ae => {
+        if (ae.targetAmplitudeJitterFactor === undefined) {
+            ae.targetAmplitudeJitterFactor = 1.0;
+            ae.currentAmplitudeJitterFactor = 1.0; // Initialize current too
+        }
+        if (ae.targetTofJitterOffset === undefined) {
+            ae.targetTofJitterOffset = 0.0;
+            ae.currentTofJitterOffset = 0.0; // Initialize current too
+        }
+        // Ensure amp and tof properties also exist, just in case, though less likely to be missing
+        if (ae.currentAmp === undefined) ae.currentAmp = 0;
+        if (ae.targetAmp === undefined) ae.targetAmp = 0;
+        if (ae.currentTof === undefined) ae.currentTof = 0;
+        if (ae.targetTof === undefined) ae.targetTof = 0;
+    });
+
     // 1. Try to update existing animated echoes or mark them for removal
     animatedEchoes.forEach(animEcho => {
         let bestMatch = null;
@@ -538,8 +734,21 @@
                 targetAmp: actualEcho.amp,
                 currentTof: actualEcho.tof, // New echoes appear at their target TOF
                 targetTof: actualEcho.tof,
-                originalTof: actualEcho.tof // Store its first TOF for future matching
+                originalTof: actualEcho.tof, // Store its first TOF for future matching
+                // Initialize jitter properties for the new echo
+                currentAmplitudeJitterFactor: 1.0,
+                targetAmplitudeJitterFactor: 1.0,
+                currentTofJitterOffset: 0.0,
+                targetTofJitterOffset: 0.0
             });
+            // If noise is enabled, set initial target jitter for the new echo and apply immediately
+            const newEchoJustAdded = newAnimatedEchoes[newAnimatedEchoes.length-1];
+            if (realismSettings.noisySignalsEnabled) {
+                newEchoJustAdded.targetAmplitudeJitterFactor = 0.85 + Math.random() * 0.3;
+                newEchoJustAdded.targetTofJitterOffset = (Math.random() - 0.5) * 0.025;
+                newEchoJustAdded.currentAmplitudeJitterFactor = newEchoJustAdded.targetAmplitudeJitterFactor;
+                newEchoJustAdded.currentTofJitterOffset = newEchoJustAdded.targetTofJitterOffset;
+            }
         }
     });
 
@@ -560,10 +769,12 @@
 
   // ————— Draw realistic A‑scan spikes —————
   // ————— Draw A‑scan with pointy triangular spikes —————
-function drawAScan(displayEchoes){ // Added displayEchoes parameter
-  const w    = ascan.width;
-  const h    = ascan.height;
-  const ctx2 = ascanCtx;
+function drawAScan(displayEchoes) {
+    const ascan = document.getElementById('ascan');
+    const ctx2 = ascan.getContext('2d');
+    const w = ascan.width;
+    const h = ascan.height;
+    const windowT = currentMaxTofDisplay; // Use the range-adjusted max TOF (seconds)
 
   // background
   ctx2.fillStyle   = '#003300';
@@ -588,19 +799,88 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
   // baseline
   const baseY = h * 0.8;
   ctx2.strokeStyle = '#00ff00';
-  ctx2.lineWidth   = 2;
   ctx2.beginPath();
   ctx2.moveTo(0, baseY);
-  ctx2.lineTo(w, baseY);
+  if (realismSettings.noisySignalsEnabled) {
+    if (noiseFrameCounter % NOISE_UPDATE_FRAME_INTERVAL === 0 || currentBaselineNoiseOffsets.length === 0) {
+        let rawOffsets = [];
+        const grassDensity = 5;
+        const grassAmplitude = 2.5;
+        for (let x_seg = 0; x_seg <= w; x_seg += grassDensity) { // w is ascan.width
+            rawOffsets.push((Math.random() - 0.5) * 2 * grassAmplitude);
+        }
+
+        // Smooth the raw offsets
+        if (rawOffsets.length === 0) {
+            currentBaselineNoiseOffsets = [];
+        } else if (rawOffsets.length === 1) {
+            currentBaselineNoiseOffsets = [rawOffsets[0]];
+        } else { // 2 or more points for smoothing
+            let smoothed = [];
+            smoothed.push((rawOffsets[0] + rawOffsets[1]) / 2); // Smoothed first point
+            for (let i = 1; i < rawOffsets.length - 1; i++) {
+                smoothed.push((rawOffsets[i-1] + rawOffsets[i] + rawOffsets[i+1]) / 3); // Middle points
+            }
+            smoothed.push((rawOffsets[rawOffsets.length - 2] + rawOffsets[rawOffsets.length - 1]) / 2); // Smoothed last point
+            currentBaselineNoiseOffsets = smoothed;
+        }
+    }
+
+    ctx2.lineWidth   = 1; // Thinner for grass
+    const grassDensity = 5; // Must match density used for populating currentBaselineNoiseOffsets
+    currentBaselineNoiseOffsets.forEach((offset, index) => {
+        const xPos = (index) * grassDensity;
+        if (xPos <= w) { // Check to prevent drawing past canvas width if array is too long
+             ctx2.lineTo(xPos, baseY + (offset * realismSettings.gain)); // Apply Gain to grass
+        }
+    });
+    // Ensure the line connects to the very end using the last or a new random offset
+    const lastX = (currentBaselineNoiseOffsets.length -1) * grassDensity;
+    if (lastX < w) {
+        const lastOffset = currentBaselineNoiseOffsets.length > 0 ? currentBaselineNoiseOffsets[currentBaselineNoiseOffsets.length -1] : 0;
+        ctx2.lineTo(w, baseY + (lastOffset * realismSettings.gain)); // Apply Gain to last grass segment
+    }
+  } else {
+    ctx2.lineWidth   = 2; // Original thickness for flat baseline
+    ctx2.lineTo(w, baseY);
+  }
   ctx2.stroke();
 
-  // If no echoes to display, nothing to draw for spikes
+  // Draw False Spikes if noisy signals are enabled
+  if (realismSettings.noisySignalsEnabled && currentFalseSpikes.length > 0) {
+    ctx2.fillStyle = '#00b300'; // A slightly dimmer or different green for noise spikes
+    const W_false = 2; // Half-width of false spikes, make them thin
+    const maxSpikeHeightAbsolute = ascan.height * 0.2; // Max 20% of canvas height (increased)
+
+    currentFalseSpikes.forEach(spike => {
+      const x_false = (spike.tof / windowT) * w;
+      // Use currentAmpFraction for animated height
+      let finalFalseSpikeH = spike.currentAmpFraction * maxSpikeHeightAbsolute;
+      finalFalseSpikeH *= realismSettings.gain; // Apply Gain to false spikes
+
+      if (Math.abs(finalFalseSpikeH) > 0.5) { // Only draw if it's at least half a pixel high
+        ctx2.beginPath();
+        ctx2.moveTo(x_false - W_false, baseY);
+        ctx2.lineTo(x_false, baseY - finalFalseSpikeH);
+        ctx2.lineTo(x_false + W_false, baseY);
+        ctx2.closePath();
+        if (realismSettings.solidSpikesEnabled) {
+            ctx2.fillStyle = '#00b300'; // Ensure fill color is set for solid false spikes
+            ctx2.fill();
+        } else {
+            ctx2.strokeStyle = '#00b300'; // Ensure stroke color is set for hollow false spikes
+            ctx2.stroke();
+        }
+      }
+    });
+  }
+
+  // If no REAL echoes to display, nothing to draw for REAL spikes
   if (!displayEchoes || displayEchoes.length === 0) {
     return;
   }
 
-  // Set a fixed time window to display multiple reverberations
-  const windowT = 20.0; // Time window in seconds (e.g., to show up to ~3-4 backwall echoes)
+  // The time window (windowT) is now defined at the beginning of drawAScan using MAX_TOF_DISPLAY.
 
   // draw pointy triangular spikes
   ctx2.fillStyle = '#00ff00';
@@ -609,10 +889,31 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
     // Skip drawing if amplitude is negligible
     if (echo.currentAmp < 0.01) return;
 
-    const x0 = (echo.currentTof / windowT) * w; // Use interpolated TOF
-    const flickerFactor = 0.95 + Math.random() * 0.1;
-    const effectiveAmp = echo.currentAmp * flickerFactor; // Use interpolated amplitude with flicker
-    const spikeH = effectiveAmp * (baseY * 0.9);
+    let currentTofForDisplay = echo.currentTof;
+    let amplitudeFactorToApply = 1.0;
+
+    if (realismSettings.noisySignalsEnabled) {
+        // LERP current jitter towards target jitter for this specific echo
+        echo.currentAmplitudeJitterFactor += (echo.targetAmplitudeJitterFactor - echo.currentAmplitudeJitterFactor) * LERP_FACTOR_SIGNAL_JITTER;
+        echo.currentTofJitterOffset += (echo.targetTofJitterOffset - echo.currentTofJitterOffset) * LERP_FACTOR_SIGNAL_JITTER;
+
+        currentTofForDisplay += echo.currentTofJitterOffset;
+        amplitudeFactorToApply = echo.currentAmplitudeJitterFactor;
+    } else {
+        // Reset jitter properties if noise is turned off
+        echo.currentAmplitudeJitterFactor = 1.0;
+        echo.targetAmplitudeJitterFactor = 1.0;
+        echo.currentTofJitterOffset = 0.0;
+        echo.targetTofJitterOffset = 0.0;
+        // Original subtle flicker if noise is off
+        amplitudeFactorToApply = 0.95 + Math.random() * 0.1;
+    }
+
+
+    const x0 = (currentTofForDisplay / windowT) * w;
+    const effectiveAmp = echo.currentAmp * amplitudeFactorToApply;
+    let spikeH = effectiveAmp * (baseY * 0.9);
+    spikeH *= realismSettings.gain; // Apply Gain
     
     // Ensure spikeH is not negative
     const finalSpikeH = Math.max(0, spikeH);
@@ -623,7 +924,11 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
     ctx2.lineTo(x0,             baseY - finalSpikeH);
     ctx2.lineTo(x0 + W,         baseY);
     ctx2.closePath();
-    ctx2.fill();
+    if (realismSettings.solidSpikesEnabled) {
+        ctx2.fill();
+    } else {
+        ctx2.stroke();
+    }
   });
 }
 
@@ -632,13 +937,62 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
   function draw(ts){
     const t=ts/1000;
 
+    noiseFrameCounter++;
+    if (realismSettings.noisySignalsEnabled) {
+        if (noiseFrameCounter % NOISE_UPDATE_FRAME_INTERVAL === 0) {
+            // Update TARGET jitter factors for each animated echo
+            animatedEchoes.forEach(echo => {
+                echo.targetAmplitudeJitterFactor = 0.85 + Math.random() * 0.3; // e.g., 0.85 to 1.15
+                echo.targetTofJitterOffset = (Math.random() - 0.5) * 0.025;     // e.g., +/- 0.0125s
+            });
+            // Baseline noise offsets will be (re)populated and smoothed in drawAScan when this condition is met.
+        }
+
+        // Generate new false spikes (less frequently)
+        if (noiseFrameCounter % (NOISE_UPDATE_FRAME_INTERVAL * FALSE_SPIKE_UPDATE_MULTIPLIER) === 0) {
+            // Mark existing false spikes to fade out first
+            currentFalseSpikes.forEach(spike => spike.targetAmpFraction = 0);
+            
+            const numFalseSpikes = Math.floor(Math.random() * 5) + 3; // 3 to 7 false spikes
+            // Generate new false spikes to grow in and add them to the array
+            for (let i = 0; i < numFalseSpikes; i++) {
+                currentFalseSpikes.push({
+                    id: nextFalseSpikeId++,
+                    tof: Math.random() * currentMaxTofDisplay, // Use range-adjusted max TOF for false spike positioning
+                    currentAmpFraction: 0, // Start at zero amplitude
+                    targetAmpFraction: Math.random() * (Math.random() < 0.7 ? 0.6 : 1.0) // Target random amplitude
+                });
+            }
+        }
+
+        // Animate (LERP) all false spikes every frame if noise is enabled
+        if (currentFalseSpikes.length > 0) {
+            currentFalseSpikes.forEach(spike => {
+                spike.currentAmpFraction += (spike.targetAmpFraction - spike.currentAmpFraction) * LERP_FACTOR_FALSE_SPIKES;
+            });
+            // Remove spikes that have fully faded out
+            currentFalseSpikes = currentFalseSpikes.filter(spike => !(spike.targetAmpFraction === 0 && Math.abs(spike.currentAmpFraction) < 0.01));
+        }
+    }
+
     // emit new pulse
-    if(t-lastEmission>=EMIT_PERIOD){
+    if(t-lastEmission>=CALCULATION_EMIT_PERIOD){
       lastEmission=t;
       const rays=computeRays();
       pulses.push(new Pulse(t, rays));
       if(pulses.length>MAX_PULSES) pulses.shift();
     }
+
+      // Emit new VISUAL pulse for animation
+      if (t - lastVisualEmission >= VISUAL_EMIT_PERIOD) {
+        lastVisualEmission = t;
+        visualWaves.push({ emissionTime: t });
+        // Keep visualWaves array from growing too large
+        const maxVisualWaves = Math.ceil(MAX_PULSES * (CALCULATION_FREQUENCY / VISUAL_PULSE_FREQUENCY)) + 2;
+        if (visualWaves.length > maxVisualWaves) {
+          visualWaves.shift();
+        }
+      }
 
     // clear main
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -653,8 +1007,8 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
     drawRoundedRect(ctx, part.x, part.y, part.w, part.h, 5);
     ctx.stroke();
     flaws.forEach(f=>{
-      ctx.fillStyle='rgba(150,0,0,0.7)'; /* Darker red for flaws */
-      ctx.strokeStyle='#a00';
+      ctx.fillStyle='rgba(20, 20, 20, 0.85)'; /* Very dark gray for flaws */
+      ctx.strokeStyle='#000000'; /* Black border for flaws */
       ctx.lineWidth=1;
       if(f.type==='rectangle'){
         ctx.fillRect(f.x,f.y,f.w,f.h);
@@ -670,6 +1024,43 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
         ctx.closePath(); ctx.fill(); ctx.stroke();
       }
     });
+    // "Top hat" part of the transducer
+    const topHatHeight = trans.h * 1.5; // Doubled height
+    const topHatWidth = trans.w * 0.6;  // Width of the top part
+    const topHatX = trans.x + (trans.w - topHatWidth) / 2;
+    const topHatY = trans.y - topHatHeight; // Position it on top of the base
+    const topHatRadius = 3; // Less rounded
+
+    ctx.fillStyle = '#555'; // Slightly different shade for the top part
+    drawRoundedRect(ctx, topHatX, topHatY, topHatWidth, topHatHeight, topHatRadius);
+    ctx.fill();
+    ctx.strokeStyle = '#222';
+    drawRoundedRect(ctx, topHatX, topHatY, topHatWidth, topHatHeight, topHatRadius);
+    ctx.stroke();
+
+    // Add checkered pattern to top hat
+    ctx.save();
+    // Re-apply clipping path for the rounded rectangle
+    drawRoundedRect(ctx, topHatX, topHatY, topHatWidth, topHatHeight, topHatRadius);
+    ctx.clip();
+
+    const checkerSize = 4;
+    const color1 = '#4a4a4a'; // Darker gray for checker
+    const color2 = '#606060'; // Lighter gray for checker
+
+    for (let y = topHatY; y < topHatY + topHatHeight; y += checkerSize) {
+      for (let x = topHatX; x < topHatX + topHatWidth; x += checkerSize) {
+        // Determine color based on position to create checkerboard
+        // Ensure we are using integer division for checkerboard logic
+        const row = Math.floor((y - topHatY) / checkerSize);
+        const col = Math.floor((x - topHatX) / checkerSize);
+        ctx.fillStyle = (row + col) % 2 === 0 ? color1 : color2;
+        ctx.fillRect(x, y, checkerSize, checkerSize);
+      }
+    }
+    ctx.restore();
+
+    // Original transducer base (the "brim")
     ctx.fillStyle='#444';
     ctx.fillRect(trans.x,trans.y,trans.w,trans.h);
     ctx.strokeStyle='#000';
@@ -696,6 +1087,7 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
 
     // filter by lifetime
     pulses = pulses.filter(p=> t - p.emissionTime <= lifetime);
+    visualWaves = visualWaves.filter(vw => t - vw.emissionTime <= lifetime); // Filter visual waves by the same lifetime
 
     // static skeleton
     rays.forEach(ray=>{
@@ -713,8 +1105,8 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
 
     // animated pulses
     rays.forEach(ray=>{
-      pulses.forEach(pl=>{
-        const age=t-pl.emissionTime;
+      visualWaves.forEach(vw=>{ // Iterate visualWaves for animation
+        const age=t-vw.emissionTime; // Use emissionTime from visualWave
         if(age<0||age>lifetime) return;
         const d=age*SPEED;
         if(d>ray.finalTotalPath) return;
@@ -779,6 +1171,49 @@ function drawAScan(displayEchoes){ // Added displayEchoes parameter
     toggleInitialPulseSwitch.checked = realismSettings.showInitialPulse;
     toggleInitialPulseSwitch.addEventListener('change', function() {
       realismSettings.showInitialPulse = this.checked;
+    });
+  }
+
+  // Event Listener for the noisy signals toggle switch
+  const toggleNoisySignalsSwitch = document.getElementById('toggleNoisySignals');
+  if (toggleNoisySignalsSwitch) {
+    toggleNoisySignalsSwitch.checked = realismSettings.noisySignalsEnabled;
+    toggleNoisySignalsSwitch.addEventListener('change', function() {
+      realismSettings.noisySignalsEnabled = this.checked;
+    });
+  }
+
+  // Event Listener for the solid spikes toggle switch
+  const toggleSolidSpikesSwitch = document.getElementById('toggleSolidSpikes');
+  if (toggleSolidSpikesSwitch) {
+    toggleSolidSpikesSwitch.checked = realismSettings.solidSpikesEnabled;
+    toggleSolidSpikesSwitch.addEventListener('change', function() {
+      realismSettings.solidSpikesEnabled = this.checked;
+    });
+  }
+
+  // Event Listener for Gain slider
+  const gainSlider = document.getElementById('gainSlider');
+  const gainValueSpan = document.getElementById('gainValue');
+  if (gainSlider && gainValueSpan) {
+    gainSlider.value = realismSettings.gain;
+    gainValueSpan.textContent = parseFloat(realismSettings.gain).toFixed(1);
+    gainSlider.addEventListener('input', function() {
+      realismSettings.gain = parseFloat(this.value);
+      gainValueSpan.textContent = parseFloat(this.value).toFixed(1);
+    });
+  }
+
+  // Event Listener for Range slider
+  const rangeSlider = document.getElementById('rangeSlider');
+  const rangeValueSpan = document.getElementById('rangeValue');
+  if (rangeSlider && rangeValueSpan) {
+    rangeSlider.value = realismSettings.rangeMultiplier;
+    rangeValueSpan.textContent = parseFloat(realismSettings.rangeMultiplier).toFixed(2);
+    rangeSlider.addEventListener('input', function() {
+      realismSettings.rangeMultiplier = parseFloat(this.value);
+      rangeValueSpan.textContent = parseFloat(this.value).toFixed(2);
+      currentMaxTofDisplay = INITIAL_MAX_TOF_DISPLAY * realismSettings.rangeMultiplier;
     });
   }
 
