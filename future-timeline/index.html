@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizons 2040: Interactive Exhibit</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div id="tech-tree-container">
+            <div id="canvas">
+                <!-- Era Columns will be injected here -->
+                <div id="eras-layer"></div>
+                
+                <!-- Connections Layer -->
+                <svg id="connections" width="100%" height="100%"></svg>
+                
+                <!-- Nodes Layer -->
+                <div id="nodes-layer"></div>
+
+                <!-- Markers Layer -->
+                <div id="markers-layer"></div>
+            </div>
+        </div>
+
+        <!-- Details Panel -->
+        <div id="details-panel">
+            <div class="details-header" id="details-header">
+                <button class="details-close" id="details-close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <div id="details-title-container">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+            <div class="details-content" id="details-content">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
