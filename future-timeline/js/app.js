@@ -653,6 +653,9 @@ function setupInteractions() {
 
     // Touch Start - Initialize drag or pinch
     container.addEventListener('touchstart', (e) => {
+        // Always reset auto-scroll velocity on touch to prevent drift
+        state.autoScrollVelocity = { x: 0, y: 0 };
+
         if (e.touches.length === 1) {
             // Single finger - start drag
             const touch = e.touches[0];
@@ -766,6 +769,8 @@ function setupInteractions() {
         if (e.touches.length === 0) {
             state.isTouchDragging = false;
             state.initialPinchDistance = null;
+            // Ensure no drift after touch ends
+            state.autoScrollVelocity = { x: 0, y: 0 };
         }
     }, { passive: false });
 
@@ -773,6 +778,7 @@ function setupInteractions() {
     container.addEventListener('touchcancel', () => {
         state.isTouchDragging = false;
         state.initialPinchDistance = null;
+        state.autoScrollVelocity = { x: 0, y: 0 };
     });
 
     // Mouse wheel zoom (also useful for desktop trackpads)
@@ -807,6 +813,13 @@ const SCROLL_MARGIN = 50; // pixels from edge to trigger scroll
 const MAX_SCROLL_SPEED = 15; // pixels per frame
 
 function handleAutoScrollInput(mouseX, mouseY) {
+    // Disable edge auto-scroll on mobile - it's a desktop-only UX feature
+    // and causes drift issues due to synthetic mouse events from touch
+    if (isMobile) {
+        state.autoScrollVelocity = { x: 0, y: 0 };
+        return;
+    }
+
     if (state.isDragging) {
         state.autoScrollVelocity = { x: 0, y: 0 };
         return;
