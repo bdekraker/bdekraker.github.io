@@ -1,14 +1,34 @@
 // Main Application Logic
 
+// Mobile Detection
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+
 // State
 const state = {
     selectedTechId: null,
     offset: { x: -100, y: -50 },
+    scale: 1,
     isDragging: false,
     startPan: { x: 0, y: 0 },
     ancestorIds: new Set(),
     descendantIds: new Set(),
-    autoScrollVelocity: { x: 0, y: 0 }
+    autoScrollVelocity: { x: 0, y: 0 },
+    // Touch state
+    lastTouchEnd: 0,
+    initialPinchDistance: null,
+    initialScale: 1,
+    touchStartPos: { x: 0, y: 0 },
+    isTouchDragging: false
+};
+
+// Zoom configuration
+const ZOOM_CONFIG = {
+    MIN_SCALE: 0.3,
+    MAX_SCALE: 2.0,
+    DOUBLE_TAP_ZOOM: 1.2,
+    DEFAULT_MOBILE_SCALE: 0.5,
+    DOUBLE_TAP_THRESHOLD: 300 // ms
 };
 
 // DOM Elements
@@ -47,6 +67,11 @@ function init() {
 function centerOnInitialView() {
     const { ERA_COLUMN_WIDTH, PADDING_LEFT } = window.LayoutConfig;
 
+    // Set initial scale for mobile devices
+    if (isMobile) {
+        state.scale = ZOOM_CONFIG.DEFAULT_MOBILE_SCALE;
+    }
+
     // Calculate Marker X (Logic duplicated from renderMarker for simplicity)
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -57,13 +82,13 @@ function centerOnInitialView() {
     const col2025X = (2 * ERA_COLUMN_WIDTH) + PADDING_LEFT; // 2025 is now Column 2
     const markerX = col2025X + (yearsSince2025 * pixelsPerYear);
 
-    // Center X
+    // Center X - account for scale on mobile
     const screenCenterX = window.innerWidth / 2;
-    const newOffsetX = screenCenterX - markerX;
+    const newOffsetX = screenCenterX - (markerX * state.scale);
 
     // Set Y to show top headers (positive value moves content down/camera up)
-    // "Bit more up" implys seeing more of the top content.
-    const newOffsetY = 20;
+    // On mobile, start a bit lower to show more content
+    const newOffsetY = isMobile ? 50 : 20;
 
     state.offset = { x: newOffsetX, y: newOffsetY };
 }
@@ -624,6 +649,155 @@ function setupInteractions() {
         }
     });
 
+    // --- Touch Event Handlers (Mobile Support) ---
+
+    // Touch Start - Initialize drag or pinch
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            // Single finger - start drag
+            const touch = e.touches[0];
+            state.isTouchDragging = true;
+            state.touchStartPos = { x: touch.clientX, y: touch.clientY };
+            state.startPan = { x: touch.clientX - state.offset.x, y: touch.clientY - state.offset.y };
+        } else if (e.touches.length === 2) {
+            // Two fingers - start pinch zoom
+            state.isTouchDragging = false;
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            state.initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+            state.initialScale = state.scale;
+
+            // Store pinch center for zoom-toward-center behavior
+            state.pinchCenter = {
+                x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+            };
+        }
+    }, { passive: true });
+
+    // Touch Move - Handle drag or pinch zoom
+    container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1 && state.isTouchDragging) {
+            // Single finger drag/pan
+            e.preventDefault();
+            const touch = e.touches[0];
+            const newX = touch.clientX - state.startPan.x;
+            const newY = touch.clientY - state.startPan.y;
+            state.offset = { x: newX, y: newY };
+        } else if (e.touches.length === 2 && state.initialPinchDistance) {
+            // Two finger pinch zoom
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Calculate new scale
+            const scaleChange = distance / state.initialPinchDistance;
+            let newScale = state.initialScale * scaleChange;
+
+            // Clamp scale
+            newScale = Math.max(ZOOM_CONFIG.MIN_SCALE, Math.min(ZOOM_CONFIG.MAX_SCALE, newScale));
+
+            // Zoom toward pinch center
+            const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+            // Calculate the point on canvas under pinch center before scaling
+            const canvasX = (pinchCenterX - state.offset.x) / state.scale;
+            const canvasY = (pinchCenterY - state.offset.y) / state.scale;
+
+            // Update scale
+            state.scale = newScale;
+
+            // Adjust offset so the pinch center stays in place
+            state.offset.x = pinchCenterX - canvasX * newScale;
+            state.offset.y = pinchCenterY - canvasY * newScale;
+        }
+    }, { passive: false });
+
+    // Touch End - Handle double-tap and cleanup
+    container.addEventListener('touchend', (e) => {
+        const now = Date.now();
+
+        // Check for double-tap (only if no remaining touches)
+        if (e.touches.length === 0 && e.changedTouches.length === 1) {
+            const touch = e.changedTouches[0];
+            const timeDiff = now - state.lastTouchEnd;
+
+            // Calculate movement since touch start
+            const moveX = Math.abs(touch.clientX - state.touchStartPos.x);
+            const moveY = Math.abs(touch.clientY - state.touchStartPos.y);
+            const wasTap = moveX < 15 && moveY < 15;
+
+            if (timeDiff < ZOOM_CONFIG.DOUBLE_TAP_THRESHOLD && wasTap) {
+                // Double-tap detected - toggle zoom
+                e.preventDefault();
+
+                const tapX = touch.clientX;
+                const tapY = touch.clientY;
+
+                // Calculate point on canvas under tap
+                const canvasX = (tapX - state.offset.x) / state.scale;
+                const canvasY = (tapY - state.offset.y) / state.scale;
+
+                // Determine target scale (toggle between zoomed-in and default)
+                let targetScale;
+                if (state.scale < ZOOM_CONFIG.DOUBLE_TAP_ZOOM - 0.1) {
+                    targetScale = ZOOM_CONFIG.DOUBLE_TAP_ZOOM;
+                } else {
+                    targetScale = ZOOM_CONFIG.DEFAULT_MOBILE_SCALE;
+                }
+
+                // Animate zoom (simple snap for now)
+                state.scale = targetScale;
+
+                // Adjust offset so tap point stays centered
+                state.offset.x = tapX - canvasX * targetScale;
+                state.offset.y = tapY - canvasY * targetScale;
+
+                // Reset to prevent triple-tap issues
+                state.lastTouchEnd = 0;
+            } else {
+                state.lastTouchEnd = now;
+            }
+        }
+
+        // Reset touch state
+        if (e.touches.length === 0) {
+            state.isTouchDragging = false;
+            state.initialPinchDistance = null;
+        }
+    }, { passive: false });
+
+    // Prevent default touch behaviors that interfere with our handlers
+    container.addEventListener('touchcancel', () => {
+        state.isTouchDragging = false;
+        state.initialPinchDistance = null;
+    });
+
+    // Mouse wheel zoom (also useful for desktop trackpads)
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+
+        const zoomIntensity = 0.001;
+        const delta = -e.deltaY * zoomIntensity;
+
+        // Calculate point on canvas under mouse
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+        const canvasX = (mouseX - state.offset.x) / state.scale;
+        const canvasY = (mouseY - state.offset.y) / state.scale;
+
+        // Calculate new scale
+        let newScale = state.scale * (1 + delta);
+        newScale = Math.max(ZOOM_CONFIG.MIN_SCALE, Math.min(ZOOM_CONFIG.MAX_SCALE, newScale));
+
+        // Update scale and adjust offset to zoom toward mouse position
+        state.scale = newScale;
+        state.offset.x = mouseX - canvasX * newScale;
+        state.offset.y = mouseY - canvasY * newScale;
+    }, { passive: false });
+
     // Start the game loop
     startGameLoop();
 }
@@ -686,20 +860,18 @@ function startGameLoop() {
 
 function clampOffset() {
     // Bounds are calculated in calculateCanvasSize
-    // Min X: -(canvasWidth - window.innerWidth) - PADDING
-    // Max X: PADDING_LEFT
-    // Min Y: -(canvasHeight - window.innerHeight) - PADDING
-    // Max Y: PADDING_TOP
+    // Account for current scale when calculating bounds
 
     const viewportW = window.innerWidth;
     const viewportH = window.innerHeight;
-    const canvasW = parseInt(canvas.style.width);
-    const canvasH = parseInt(canvas.style.height);
+    const canvasW = parseInt(canvas.style.width) * state.scale;
+    const canvasH = parseInt(canvas.style.height) * state.scale;
 
-    const minX = -(canvasW - viewportW) - 100; // Extra buffer
-    const maxX = 100;
-    const minY = -(canvasH - viewportH) - 100;
-    const maxY = 100;
+    const buffer = 100 * state.scale;
+    const minX = -(canvasW - viewportW) - buffer;
+    const maxX = buffer;
+    const minY = -(canvasH - viewportH) - buffer;
+    const maxY = buffer;
 
     // Soft clamp
     if (state.offset.x < minX) state.offset.x = minX;
@@ -709,8 +881,8 @@ function clampOffset() {
 }
 
 function updateTransform() {
-    // Use translate3d to force hardware acceleration
-    canvas.style.transform = `translate3d(${state.offset.x.toFixed(1)}px, ${state.offset.y.toFixed(1)}px, 0)`;
+    // Use translate3d and scale to force hardware acceleration
+    canvas.style.transform = `translate3d(${state.offset.x.toFixed(1)}px, ${state.offset.y.toFixed(1)}px, 0) scale(${state.scale.toFixed(3)})`;
 }
 
 // Expose selectTech globally for inline onclicks
