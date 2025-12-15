@@ -233,6 +233,13 @@ nav a:hover {
     color: var(--text-secondary);
 }
 
+.card-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+}
+
 /* Video Preview in Cards */
 .card-media {
     width: 100%;
