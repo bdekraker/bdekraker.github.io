@@ -1,335 +1,435 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Benjamin De Kraker - Developer Portfolio and Blog</title>
-  <link rel="stylesheet" href="styles.css?v=1.5">
+  <title>Benjamin De Kraker | Creative Technologist</title>
+  <link rel="stylesheet" href="styles.css?v=2.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
+
+  <div class="background-glow"></div>
+
   <header>
-    <nav>
-      <ul>
-        <li><a href="#">Home</a></li>
-        <li><a href="#">About</a></li>
-        <li><a href="https://github.com/bdekraker">GitHub Profile</a></li>
-        <li><a href="#">Portfolio</a></li>
-        <li><a href="https://x.com/BenjaminDEKR/">Contact on X</a></li>
-      </ul>
-    </nav>
+    <div class="container">
+      <nav>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="#work">Work</a></li>
+          <li><a href="https://github.com/bdekraker" target="_blank">GitHub</a></li>
+          <li><a href="https://x.com/BenjaminDEKR/" target="_blank">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
   </header>
 
   <main>
     <section class="hero">
-      <h1>Benjamin De Kraker | Full Stack Developer</h1>
-      <p>A collection of various projects and ideas. A work in progress.</p>
+      <div class="container animate-on-scroll">
+        <h1>Benjamin De Kraker</h1>
+        <p>Full Stack Developer & Creative Technologist.<br>Building the future with AI, Code, and Vision.</p>
+        <div class="scroll-indicator">↓</div>
+      </div>
     </section>
 
-    <div class="content">
-      <section class="blog-posts">
+    <section id="work" class="container">
+      <div class="bento-grid">
 
-         <section class="projects">
-          <article>
-              <h2>NDT Ultrasonic (UT) Device Simulator / Proceedures Trainer</h2>
-              <p>
-                Built this fully-interactive NDT UT proceedures training for simulating and teaching ultrasonic flaw detection, including wave behavior and A-Scan display. <br>
-Try the basic simulator here: <a href="https://dekraker.dev/ATDM-UT-Simulator.html">https://dekraker.dev/ATDM-UT-Simulator.html</a>
-              </p>
-             
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/UT-sim2.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-
-            
-
-<p>
-  Advanced 3D UT simulator: <br>
-  <br><br>
-  <video controls autoplay muted loop>
-                  <source src="/vids/UT-advanced-shear2.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-                <video controls autoplay muted loop>
-                  <source src="/vids/UT-advanced2.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-            
-<p>
-  Basic 2D simulator: <br>
-                <video controls autoplay muted loop>
-                  <source src="/vids/ut-simulator-demo-improved2.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-           
-          </article>
-        </section>
-
-        <!-- New NDT Magnetic Particle Simulator Section -->
-        <section class="projects">
-          <article>
-              <h2>NDT Magnetic Particle (MT) Yoke Simulator</h2>
-              <p>
-                An interactive 3D simulation demonstrating magnetic particle testing principles using a yoke. Visualize magnetic flux lines, their interaction with surface cracks, and the effects of changing parameters like pole gap and power. Features dynamic rendering of flux, electron flow animation, and smooth visual transitions for enhanced learning.
-              </p>
-             
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/mag2.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-
-        <!-- New Project: OpenClaudeCode -->
-        <section class="projects">
-          <article>
-              <h2>OpenClaudeCode</h2>
-              <p>
-                OpenClaudeCode is a simple yet powerful Python tool that brings Anthropic's Claude AI to your terminal. Think of it as your personal coding assistant! Ask questions, run commands, manage files, or even handle Git tasks—all from a command-line interface (CLI) or an interactive REPL.
-              </p>
-              <p>
-                <strong>Key Features:</strong> Easy installation with <code>git clone</code> and <code>pip install</code>, configuration via a <code>config.json</code> file, and versatile usage through both quick CLI commands and an interactive REPL.
-              </p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/miniclaude.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="https://github.com/bdekraker/OpenClaudeCode" class="read-more" target="_blank">View on GitHub</a>
-          </article>
-        </section>
-
-        <!-- Existing Projects -->
-        <section class="projects">
-          <article>
-              <h2>Audio Analysis and Normalization Software</h2>
-              <p>This Python application is a desktop tool for visualizing, analyzing, and processing WAV audio files. The application assisted my team on the training pipeline for Grok Voice.
-                <br><br>
-It leverages several technologies and libraries: <br><br>
-<br>PyQt5: Provides the graphical user interface (GUI), including menus, custom widgets, and media playback controls.
-<br>PyQtGraph: Used for plotting and dynamically updating waveform visualizations.
-<br>Pydub: Handles audio file manipulation such as normalization, gain adjustments, and conversion.
-<br>NumPy & wave: Perform low-level audio processing tasks like computing RMS (Root Mean Square) and peak levels.
-<br>FFmpeg (via subprocess): Ensures precise audio conversions (e.g., converting files to mono, 24-bit, 48 kHz).</p>
-            <p>
-Manual Volume Normalization: Implements a multi-pass, chunk-based normalization process with crossfading to smooth out transitions.
-<br>Audio Conversion: Provides a tool to convert audio files to the required specifications using both pydub and FFmpeg.
-            </p>
-                
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/wavapp.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-        
-        <section class="projects">
-          <article>
-              <h2>AI Vision with Object Recognition</h2>
-              <p>I built a clone of a Google DeepMind demo -- it took under an hour.<br>
-              Object recognition and description from video frames via GPT-4o Vision API.
-              </p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/google.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-        
-        <section class="projects">
-          <article>
-              <h2>AI Video Creation and Editing Platform</h2>
-              <p>I was the founder and sole developer of <a href="https://finalframe.ai">FinalFrame.ai</a>, one of the first consumer AI video platforms.
-<br><br>
-Tech Stack: Javascript, PHP, Python, MySQL, Linux, Redis<br>
-Backend: AI libraries on distributed NVIDIA A100 GPU machines, CUDA, Docker, Conda, custom Python 
-              </p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/finalframe.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-
-         <section class="projects">
-          <article>
-              <h2>Lat / Lon GPS Coordinates for ChatGPT</h2>
-              <p>Locate Me, GPT: Ping your location (anonymously) for Maps and Directions in GPT.
-<br><br>
-MVP / Demo of a secure method of doing tours, navigation, and location-based features for ChatGPT users.
-              </p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/locateme.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-       
-        <section class="projects">
-          <article>
-              <h2>Eye Tracking: In-browser Gaze Based Menu Navigation</h2>
-              <p>Web application made with JavaScript. Handsfree face and eye tracking interface, such as for disabled users.</p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/eyetrack.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-
-        <section class="projects">
-          <article>
-              <h2>Terminal AI: Talk to your Terminal with AI + Speech Recognition</h2>
-              <p>Windows/Mac application made with Electron + Node.js.</p>
-            <p>This is a fully functional custom terminal (CLI) for Windows, integrated with AI functions and advanced voice recognition.</p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/terminal.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-
-        <!-- New Projects -->
-        <section class="projects">
-          <article>
-              <h2>FSD Stop Detection Dashcam Video Editor</h2>
-              <p>
-                Automatically detects stop/start events in dashcam videos by analyzing a visible speedometer. 
-                Using OCR and frame processing, it logs when the vehicle stops or moves, overlays speed and status on video, and exports clips of moving segments.
-              </p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/368415121-1c735f70-c1e7-476f-b3a4-356a4186865a.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="http://aiblocks.ai/users/bdekraker/fsd-detect/" class="read-more" target="_blank">Web Version Here</a>
-          </article>
-        </section>
-
-        <section class="projects">
-          <article>
-              <h2>Gesture Detection and Emoji Animation</h2>
-              <p>
-                A real-time system that uses MediaPipe for hand and face tracking to detect gestures (thumbs up, victory, facepalm, heart, OK hand) and displays floating emojis using OpenCV and Pillow.
-              </p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/373835203-46d2fd71-3ae9-4ab6-a1a9-24f76a34c863.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-
-        <section class="projects">
-          <article>
-              <h2>Magnifier Lens Effect</h2>
-              <p>
-                A JavaScript-based magnifying lens effect for images, featuring smooth magnification that follows the mouse cursor and adjustable lens size via the scroll wheel.
-              </p>
-              <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/363127381-42a474f5-8dcf-4024-871c-2201f1a02751.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="https://github.com/bdekraker/magnifier-lens-effect" class="read-more" target="_blank">View on GitHub</a>
-          </article>
-        </section>
-
-        <!-- New Project: LLM Chain Application with Node-based Workflow -->
-        <section class="projects">
-          <article>
-              <h2>LLM Chain Builder with Nodes-based Logic</h2>
-              <p>
-                A Python application built with PySide6 that provides a graphical, node-based interface for designing and executing language model chains. The project utilizes Qt's QGraphicsScene and QThread to allow users to add various node types—such as user input, code execution, and image nodes—and connect them to form complex workflows.
-              </p>
-              <p>
-                <strong>Tech Stack:</strong> Python, PySide6 (Qt for Python), QGraphicsScene, QThread, subprocess, and integration with APIs (e.g., Anthropics API) for LLM processing.
-              </p>
-              <p>
-                The code demonstrates how nodes are created, connected, and executed in sequence. It also includes features for saving and loading node configurations using JSON.
-              </p>
-            <p>
-                <video controls autoplay muted loop>
-                  <source src="/vids/nodeexample.mp4" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>
-              </p>
-              <a href="#" class="read-more">Read More</a>
-          </article>
-        </section>
-      </section>
-
-      <aside class="sidebar">
-        <div class="sidebar-content">
-          <div class="profile">
-            <img src="benjamin-dekraker2.jpg" alt="Benjamin DeKraker Profile Photo" class="profile-pic">
-            <h2>About Me</h2>
-            <p>
-              Hi, I'm Benjamin De Kraker. I'm a full-stack developer specializing in rapid web and AI application deployment using modern AI-first tools.<br><br> I prefer to iterate and ship fast using AI as leverage (ie, the "AI era" way of building).
-            </p>
-          </div>
-          
-          <div class="toolset">
-            <h2>Toolset</h2>
-            <ul>
-              <li><strong>Programming &amp; Scripting:</strong> Python, PHP, Node.js, JavaScript</li>
-              <li><strong>Frameworks &amp; Libraries:</strong> Electron, React Native, MediaPipe, PySide6</li>
-              <li><strong>Computer Vision &amp; OCR:</strong> OpenCV, Tesseract, FFmpeg, Matplotlib, Pillow, NumPy</li>
-              <li><strong>Databases &amp; Data:</strong> SQLite, Redis, REST APIs</li>
-              <li><strong>Systems:</strong> Linux</li>
-            </ul>
-          </div>
-          
-          <div class="experience">
-            <h2>Recent Job Experience</h2>
-            <h3>xAI Human Data Team (Grok)</h3>
-            <ul>
-              <li>Worked on a multimodal team helping train an upcoming Grok multimodal feature.</li>
-              <li>Built custom software tools to improve this workflow and team efficiency.</li>
-            </ul>
-            <br><br>
-            <h3>FinalFrame.ai</h3>
-            <ul>
-              <li>Built an AI video creation platform which reached over 10,000 users.</li>
-              <li>Was the founder and sole developer on this project.</li>
-            </ul>
+        <!-- Profile Card -->
+        <div class="card profile-card animate-on-scroll">
+          <img src="benjamin-dekraker2.jpg" alt="Benjamin De Kraker">
+          <h3>About Me</h3>
+          <p>I specialize in rapid web and AI application deployment, iterating fast with AI leverage.</p>
+          <p class="about-text">
+            My background includes extensive work in <strong>Non-Destructive Testing (NDT)</strong> at nuclear power
+            plants and industrial sites.
+            I bridge the gap between physical engineering inspection and modern software simulation.
+          </p>
+          <div class="tech-stack">
+            <span class="tech-tag">Python</span>
+            <span class="tech-tag">JavaScript</span>
+            <span class="tech-tag">NDT/NDE</span>
+            <span class="tech-tag">Simulation</span>
           </div>
         </div>
-      </aside>
-    </div>
+
+        <!-- OpenClaudeCode -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline poster="">
+              <source src="vids/miniclaude.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>OpenClaudeCode</h3>
+          <p>Claude AI in your terminal. CLI & REPL assistant.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Python</span>
+            <span class="tech-tag">CLI</span>
+          </div>
+          <!-- Hidden Details for Modal -->
+          <div class="project-details">
+            <p>OpenClaudeCode is a simple yet powerful Python tool that brings Anthropic's Claude AI to your terminal.
+              Think of it as your personal coding assistant! Ask questions, run commands, manage files, or even handle
+              Git tasks—all from a command-line interface (CLI) or an interactive REPL.</p>
+            <p><strong>Key Features:</strong> Easy installation with `git clone` and `pip install`, configuration via a
+              `config.json` file, and versatile usage through both quick CLI commands and an interactive REPL.</p>
+            <video controls loop>
+              <source src="vids/miniclaude.mp4" type="video/mp4">
+            </video>
+            <br>
+            <a href="https://github.com/bdekraker/OpenClaudeCode" target="_blank" style="color: var(--accent);">View on
+              GitHub</a>
+          </div>
+        </div>
+
+        <!-- FinalFrame.ai -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/finalframe.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>FinalFrame.ai</h3>
+          <p>Founder & Developer. AI video creation platform with 10k+ users.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Full Stack</span>
+            <span class="tech-tag">GPU/CUDA</span>
+          </div>
+          <div class="project-details">
+            <p>I was the founder and sole developer of <a href="https://finalframe.ai">FinalFrame.ai</a>, one of the
+              first consumer AI video platforms.</p>
+            <p><strong>Tech Stack:</strong> Javascript, PHP, Python, MySQL, Linux, Redis<br>
+              <strong>Backend:</strong> AI libraries on distributed NVIDIA A100 GPU machines, CUDA, Docker, Conda,
+              custom Python
+            </p>
+            <video controls loop>
+              <source src="vids/finalframe.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Advanced 3D UT Simulator (FEATURED) -->
+        <div class="card featured-card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/UT-advanced-shear2.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>Advanced 3D UT Simulation</h3>
+          <p>High-fidelity ray tracing and shear wave physics for NDT.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">3D Rendering</span>
+            <span class="tech-tag">Physics Engine</span>
+            <span class="tech-tag">Industrial</span>
+          </div>
+          <div class="project-details">
+            <p>A cutting-edge 3D simulator for Ultrasonic Testing (UT). It features complex ray tracing, shear wave
+              propagation, and real-time 3D visualization of the workpiece and probe mechanics.</p>
+            <h4>Shear Wave Propagation</h4>
+            <video controls loop>
+              <source src="vids/UT-advanced-shear2.mp4" type="video/mp4">
+            </video>
+            <h4 class="modal-subheading">Component Visualization</h4>
+            <video controls loop>
+              <source src="vids/UT-advanced2.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Basic UT Simulator -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/UT-sim2.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>NDT UT Procedures</h3>
+          <p>Web-based 2D training simulator for basic flaw detection.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Web App</span>
+            <span class="tech-tag">Training</span>
+          </div>
+          <div class="project-details">
+            <p>Built this fully-interactive NDT UT procedures trainer for simulating and teaching ultrasonic flaw
+              detection, including wave behavior and A-Scan display.</p>
+            <p>Try the basic simulator here: <a href="https://dekraker.dev/ATDM-UT-Simulator.html"
+                target="_blank">Launch Simulator</a></p>
+            <video controls loop>
+              <source src="vids/UT-sim2.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Magnetic Particle Simulator -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/mag2.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>NDT Mag Particle</h3>
+          <p>Interactive 3D simulation for magnetic particle testing principles.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Simulation</span>
+            <span class="tech-tag">3D</span>
+          </div>
+          <div class="project-details">
+            <p>An interactive 3D simulation demonstrating magnetic particle testing principles using a yoke. Visualize
+              magnetic flux lines, their interaction with surface cracks, and the effects of changing parameters like
+              pole gap and power. Features dynamic rendering of flux, electron flow animation, and smooth visual
+              transitions for enhanced learning.</p>
+            <video controls loop>
+              <source src="vids/mag2.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- FSD Dashcam Editor -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/368415121-1c735f70-c1e7-476f-b3a4-356a4186865a.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>FSD Stop Detector</h3>
+          <p>Automated dashcam video analysis with OCR and speed detection.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Python</span>
+            <span class="tech-tag">OCR</span>
+          </div>
+          <div class="project-details">
+            <p>Automatically detects stop/start events in dashcam videos by analyzing a visible speedometer. Using OCR
+              and frame processing, it logs when the vehicle stops or moves, overlays speed and status on video, and
+              exports clips of moving segments.</p>
+            <video controls loop>
+              <source src="vids/368415121-1c735f70-c1e7-476f-b3a4-356a4186865a.mp4" type="video/mp4">
+            </video>
+            <a href="http://aiblocks.ai/users/bdekraker/fsd-detect/" target="_blank">Web Version Here</a>
+          </div>
+        </div>
+
+        <!-- Audio Analysis -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/wavapp.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>Audio Analysis Tool</h3>
+          <p>Desktop tool for visualizing and processing WAV audio files.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Python</span>
+            <span class="tech-tag">PyQt5</span>
+          </div>
+          <div class="project-details">
+            <p>This Python application is a desktop tool for visualizing, analyzing, and processing WAV audio files.
+              The application assisted my team on the training pipeline for Grok Voice.</p>
+            <p><strong>Stack:</strong> PyQt5, PyQtGraph, Pydub, NumPy, FFmpeg</p>
+            <video controls loop>
+              <source src="vids/wavapp.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- AI Vision Object Recog -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/google.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>AI Vision Clone</h3>
+          <p>Real-time object recognition using GPT-4o Vision API.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">GPT-4o</span>
+            <span class="tech-tag">Vision API</span>
+          </div>
+          <div class="project-details">
+            <p>I built a clone of a Google DeepMind demo -- it took under an hour. Object recognition and description
+              from video frames via GPT-4o Vision API.</p>
+            <video controls loop>
+              <source src="vids/google.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Locate Me GPT -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/locateme.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>Locate Me, GPT</h3>
+          <p>Geolocation integration for ChatGPT for navigation.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">ChatGPT</span>
+            <span class="tech-tag">Geolocation</span>
+          </div>
+          <div class="project-details">
+            <p>Ping your location (anonymously) for Maps and Directions in GPT. MVP / Demo of a secure method of doing
+              tours, navigation, and location-based features for ChatGPT users.</p>
+            <video controls loop>
+              <source src="vids/locateme.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Eye Tracking -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/eyetrack.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>Eye Tracking Nav</h3>
+          <p>Handsfree face and eye tracking interface for browser navigation.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">JavaScript</span>
+            <span class="tech-tag">WebAPI</span>
+          </div>
+          <div class="project-details">
+            <p>Web application made with JavaScript. Handsfree face and eye tracking interface, such as for disabled
+              users.</p>
+            <video controls loop>
+              <source src="vids/eyetrack.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Terminal AI -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/terminal.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>Terminal AI</h3>
+          <p>Talk to your terminal with AI + Speech Recognition.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Electron</span>
+            <span class="tech-tag">Node.js</span>
+          </div>
+          <div class="project-details">
+            <p>Windows/Mac application made with Electron + Node.js. This is a fully functional custom terminal (CLI)
+              for Windows, integrated with AI functions and advanced voice recognition.</p>
+            <video controls loop>
+              <source src="vids/terminal.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Gesture Detection -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/373835203-46d2fd71-3ae9-4ab6-a1a9-24f76a34c863.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>Gesture Emojis</h3>
+          <p>Real-time hand/face tracking to trigger emoji animations.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">MediaPipe</span>
+            <span class="tech-tag">OpenCV</span>
+          </div>
+          <div class="project-details">
+            <p>A real-time system that uses MediaPipe for hand and face tracking to detect gestures (thumbs up,
+              victory, facepalm, heart, OK hand) and displays floating emojis using OpenCV and Pillow.</p>
+            <video controls loop>
+              <source src="vids/373835203-46d2fd71-3ae9-4ab6-a1a9-24f76a34c863.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <!-- Magnifier Lens -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/363127381-42a474f5-8dcf-4024-871c-2201f1a02751.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>JS Magnifier</h3>
+          <p>Smooth magnifying lens effect for images.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">JavaScript</span>
+            <span class="tech-tag">Canvas</span>
+          </div>
+          <div class="project-details">
+            <p>A JavaScript-based magnifying lens effect for images, featuring smooth magnification that follows the
+              mouse cursor and adjustable lens size via the scroll wheel.</p>
+            <video controls loop>
+              <source src="vids/363127381-42a474f5-8dcf-4024-871c-2201f1a02751.mp4" type="video/mp4">
+            </video>
+            <a href="https://github.com/bdekraker/magnifier-lens-effect" target="_blank">View on GitHub</a>
+          </div>
+        </div>
+
+        <!-- LLM Chain Builder -->
+        <div class="card animate-on-scroll">
+          <div class="card-media">
+            <video loop muted playsinline>
+              <source src="vids/nodeexample.mp4" type="video/mp4">
+            </video>
+          </div>
+          <h3>LLM Node Builder</h3>
+          <p>Visual node-based interface for designing LLM chains.</p>
+          <div class="tech-stack">
+            <span class="tech-tag">Python</span>
+            <span class="tech-tag">PySide6</span>
+          </div>
+          <div class="project-details">
+            <p>A Python application built with PySide6 that provides a graphical, node-based interface for designing
+              and executing language model chains.</p>
+            <p><strong>Tech Stack:</strong> Python, PySide6, QGraphicsScene, QThread</p>
+            <video controls loop>
+              <source src="vids/nodeexample.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+      </div>
+    </section>
   </main>
 
   <footer>
-    <p>&copy; 2024</p>
+    <div class="container">
+      <p>&copy; 2024 Benjamin De Kraker</p>
+    </div>
   </footer>
+
+  <!-- Video Modal -->
+  <div class="modal" id="project-modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <div class="modal-body">
+        <h2 id="modal-title"></h2>
+        <div id="modal-content-injected"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+  <script>
+    // Inline script to handle video play/pause on hover for performance
+    document.querySelectorAll('.card').forEach(card => {
+      const video = card.querySelector('video');
+      if (video) {
+        card.addEventListener('mouseenter', () => video.play());
+        card.addEventListener('mouseleave', () => {
+          video.pause();
+          video.currentTime = 0;
+        });
+      }
+    });
+  </script>
 </body>
+
 </html>
